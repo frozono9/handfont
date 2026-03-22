@@ -1012,7 +1012,7 @@ async function buildFont() {
   }, 400);
 
   try {
-    const res = await fetch('https://handfont.onrender.com/api/build-font', { method: 'POST', body: form });
+    const res = await fetch('https://handfont-prod.onrender.com/api/build-font', { method: 'POST', body: form });
     clearInterval(interval);
 
     if (!res.ok) {
@@ -1219,7 +1219,7 @@ async function handlePlaygroundUpload(fileList, params = {}) {
     }, 450);
 
     try {
-        const res = await fetch('https://handfont.onrender.com/api/build-font-direct', { method: 'POST', body: form });
+        const res = await fetch('https://handfont-prod.onrender.com/api/build-font-direct', { method: 'POST', body: form });
         clearInterval(pgTimer);
 
         if (!res.ok) {
