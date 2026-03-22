@@ -3,6 +3,7 @@ HandFont Web App — Flask Backend
 """
 from flask import Flask, request, jsonify, send_file, render_template
 from flask import after_this_request
+from flask_cors import CORS
 import os, io, json, zipfile, tempfile, uuid
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from generate_sheets import build_pdf
 from build_font import process_scan, SHEET_CHAR_ORDER
 
 app = Flask(__name__, template_folder='templates')
+CORS(app) # Enable CORS for GitHub Pages
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
 
 UPLOAD_DIR = Path(tempfile.gettempdir()) / "handfont_uploads"
