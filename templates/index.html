@@ -816,19 +816,43 @@
       <div id="playgroundError" class="error-msg"></div>
 
       <div id="playgroundTestArea" style="display:none">
+        <div style="background: var(--cream); padding: 20px; border: 1px solid var(--rule); margin-bottom: 24px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <label>Letter Spacing (Gap)</label>
+              <input type="range" id="pgLetterSpacing" min="0.5" max="2.5" step="0.1" value="1.0" style="width:100%" oninput="updatePlaygroundFont()">
+              <div style="display:flex; justify-content: space-between; font-size: 0.65rem; font-family: 'DM Mono', monospace; color: var(--muted); margin-top: 4px;">
+                <span>Tight</span><span id="pgLetterSpacingVal">1.0x</span><span>Loose</span>
+              </div>
+            </div>
+            <div>
+              <label>Space Width (Word Gap)</label>
+              <input type="range" id="pgSpaceWidth" min="50" max="800" step="50" value="250" style="width:100%" oninput="updatePlaygroundFont()">
+              <div style="display:flex; justify-content: space-between; font-size: 0.65rem; font-family: 'DM Mono', monospace; color: var(--muted); margin-top: 4px;">
+                <span>Narrow</span><span id="pgSpaceWidthVal">250</span><span>Wide</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 15px; text-align: right;">
+            <button class="btn btn-outline" id="pgRebuildBtn" onclick="rebuildPlaygroundFont()" style="padding: 6px 14px; font-size: 0.65rem;">
+              ↻ Apply Changes & Rebuild
+            </button>
+          </div>
+        </div>
+
         <label for="playgroundInput">Magic! Start typing below:</label>
         <textarea id="playgroundInput" placeholder="The quick brown fox..."
                   style="width:100%; height:250px; padding:20px; font-size:48px; line-height:1.4; border:1.5px solid var(--rule); background:var(--paper); outline:none; font-family:inherit; resize:vertical; transition:border-color 0.2s;"></textarea>
         
         <div style="margin-top:20px; display:flex; gap:20px; align-items:center;">
             <div style="flex:1">
-              <label>Adjust Scale</label>
-              <input type="range" min="12" max="160" value="48" style="width:100%" oninput="updatePlaygroundSize(this.value)">
+              <label>Adjust Preview Size</label>
+              <input type="range" min="12" max="160" value="48" style="width:100%" oninput="updatePlaygroundPreview(this.value)">
             </div>
             <div style="width:80px">
               <span id="pgSizeVal" style="font-family:'DM Mono',monospace; font-size:0.8rem">48px</span>
             </div>
-            <button class="btn btn-outline" id="pgDownloadBtn" style="padding:8px 16px; font-size:0.7rem">Download .TTF</button>
+            <button class="btn btn-primary" id="pgDownloadBtn" style="padding:8px 16px; font-size:0.7rem">↓ Download Final .TTF</button>
         </div>
       </div>
 
@@ -1125,9 +1149,38 @@ function updateFontSize(val) {
 }
 
 // ── Playground ─────────────────────────────────────────────────────────────
-async function handlePlaygroundUpload(fileList) {
-    if (fileList.length === 0) return;
-    const files = Array.from(fileList);
+let playgroundFiles = [];
+
+function updatePlaygroundFont() {
+    const ls = document.getElementById('pgLetterSpacing').value;
+    const sw = document.getElementById('pgSpaceWidth').value;
+    document.getElementById('pgLetterSpacingVal').textContent = ls + 'x';
+    document.getElementById('pgSpaceWidthVal').textContent = sw;
+}
+
+async function rebuildPlaygroundFont() {
+    if (playgroundFiles.length === 0) return;
+    const btn = document.getElementById('pgRebuildBtn');
+    const originalText = btn.textContent;
+    btn.textContent = '↺ Rebuilding...';
+    btn.disabled = true;
+
+    const params = {
+        letterSpacing: document.getElementById('pgLetterSpacing').value,
+        spaceWidth: document.getElementById('pgSpaceWidth').value
+    };
+
+    await handlePlaygroundUpload(playgroundFiles, params);
+    btn.textContent = originalText;
+    btn.disabled = false;
+}
+
+async function handlePlaygroundUpload(fileList, params = {}) {
+    if (!fileList || (fileList.length === 0 && playgroundFiles.length === 0)) return;
+    if (fileList && fileList.length > 0) {
+        playgroundFiles = Array.from(fileList);
+    }
+    const files = playgroundFiles;
     
     const status = document.getElementById('playgroundStatus');
     const pgError = document.getElementById('playgroundError');
@@ -1140,13 +1193,20 @@ async function handlePlaygroundUpload(fileList) {
 
     pgError.classList.remove('visible');
     pgProgress.style.display = 'block';
-    pgProgressBar.style.width = '0%';
-    pgProgressLabel.textContent = 'Processing PDF...';
-    pgTestArea.style.display = 'none';
-
+    
     const form = new FormData();
     form.append('fontName', 'PlaygroundFont');
     files.forEach(f => form.append('pages', f));
+    
+    // Add optional params
+    if (params.letterSpacing) form.append('letterSpacing', params.letterSpacing);
+    if (params.spaceWidth) form.append('spaceWidth', params.spaceWidth);
+
+    // Only show full progress bar if it's the first time
+    if (pgTestArea.style.display === 'none') {
+        pgProgressBar.style.width = '0%';
+        pgProgressLabel.textContent = 'Processing PDF...';
+    }
 
     // Fake progress
     let pgVal = 0;
@@ -1181,12 +1241,15 @@ async function handlePlaygroundUpload(fileList) {
         
         pgInput.style.fontFamily = `'${fontName}', 'Syne', sans-serif`;
         pgInput.placeholder = "Great! Your handwriting is now a font. Magic is happening as you type...";
-        pgInput.focus();
+        
+        if (pgTestArea.style.display === 'none') {
+            pgInput.focus();
+        }
 
         pgDownloadBtn.onclick = () => {
             const a = document.createElement('a');
             a.href = ttfUrl;
-            a.download = `${fontName}.ttf`;
+            a.download = `MyHandwriting_Custom.ttf`;
             a.click();
         };
         pgDownloadBtn.style.display = 'block';
@@ -1201,7 +1264,7 @@ async function handlePlaygroundUpload(fileList) {
     }
 }
 
-function updatePlaygroundSize(val) {
+function updatePlaygroundPreview(val) {
     document.getElementById('playgroundInput').style.fontSize = val + 'px';
     document.getElementById('pgSizeVal').textContent = val + 'px';
 }
