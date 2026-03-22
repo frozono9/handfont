@@ -1,4 +1,4 @@
-# HandFont — Turn Your Handwriting Into a Real Font
+# handfont
 
 A local web app that generates fill-in PDF template sheets, then processes
 your scanned/photographed handwriting into a complete font family (TTF, OTF, WOFF2).
