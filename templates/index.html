@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HandFont — Make Your Handwriting a Font</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --ink:       #0d0d0d;
+    --paper:     #f5f2ee;
+    --cream:     #ede9e2;
+    --rule:      #d6cfc4;
+    --accent:    #1a3de8;
+    --accent2:   #e83d1a;
+    --muted:     #7a7268;
+    --success:   #1a8c47;
+    --card-bg:   #ffffff;
+    --shadow:    0 2px 12px rgba(13,13,13,0.08);
+    --shadow-lg: 0 8px 40px rgba(13,13,13,0.14);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background ruled lines ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 27px,
+      var(--rule) 28px
+    );
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Header ── */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--ink);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    height: 56px;
+  }
+
+  .logo {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .logo span {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 300;
+    color: #888;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    align-self: center;
+  }
+
+  nav {
+    display: flex;
+    gap: 0;
+  }
+  nav button {
+    background: transparent;
+    border: none;
+    color: #888;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0 20px;
+    height: 56px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  nav button:hover { color: #fff; }
+  nav button.active { color: #fff; border-bottom-color: var(--accent); }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 60px 24px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Page sections ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Hero ── */
+  .hero {
+    text-align: center;
+    padding: 40px 0 60px;
+  }
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 20px;
+    color: var(--ink);
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero p {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 520px;
+    margin: 0 auto 40px;
+    line-height: 1.65;
+    font-weight: 400;
+  }
+
+  /* ── Steps ── */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin-bottom: 60px;
+  }
+  .step {
+    background: var(--card-bg);
+    padding: 32px 28px;
+  }
+  .step-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .step h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .step p {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.6;
+    font-weight: 400;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    padding: 40px;
+    margin-bottom: 24px;
+  }
+  .card-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--cream);
+  }
+  .card-header h2 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  .card-header .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: var(--cream);
+    color: var(--muted);
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+
+  /* ── Form elements ── */
+  label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 12px 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    background: var(--paper);
+    border: 1.5px solid var(--rule);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+    margin-bottom: 24px;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+
+  .checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--paper);
+    border: 1.5px solid var(--rule);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    user-select: none;
+  }
+  .checkbox-item:hover { border-color: var(--accent); }
+  .checkbox-item.checked {
+    border-color: var(--accent);
+    background: #f0f3ff;
+  }
+  .checkbox-item input { display: none; }
+  .check-indicator {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--rule);
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    transition: all 0.15s;
+  }
+  .checkbox-item.checked .check-indicator {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .check-indicator::after {
+    content: '';
+    width: 8px;
+    height: 5px;
+    border-left: 1.5px solid white;
+    border-bottom: 1.5px solid white;
+    transform: rotate(-45deg) translateY(-1px);
+    opacity: 0;
+  }
+  .checkbox-item.checked .check-indicator::after { opacity: 1; }
+  .check-label { font-size: 0.82rem; font-weight: 600; }
+  .check-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+  .btn-primary:hover { background: var(--accent); border-color: var(--accent); }
+  .btn-outline {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--rule);
+  }
+  .btn-outline:hover { border-color: var(--ink); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Upload zone ── */
+  .upload-zone {
+    border: 2px dashed var(--rule);
+    padding: 48px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: #f0f3ff;
+  }
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .upload-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 16px;
+    opacity: 0.3;
+  }
+  .upload-zone h3 { font-size: 1rem; margin-bottom: 6px; }
+  .upload-zone p { font-size: 0.8rem; color: var(--muted); font-weight: 400; }
+
+  /* ── File list ── */
+  .file-list {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    font-size: 0.82rem;
+  }
+  .file-item-icon { color: var(--accent); font-size: 1rem; }
+  .file-item-name { flex: 1; font-weight: 600; }
+  .file-item-size { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 0.7rem; }
+  .file-item-remove {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0 4px;
+    transition: color 0.15s;
+  }
+  .file-item-remove:hover { color: var(--accent2); }
+
+  /* ── Progress ── */
+  .progress-bar-wrap {
+    height: 3px;
+    background: var(--cream);
+    margin: 24px 0 8px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Result ── */
+  .result-card {
+    border: 1.5px solid var(--success);
+    padding: 28px 32px;
+    background: #f0faf4;
+    display: none;
+    margin-top: 24px;
+  }
+  .result-card.visible { display: block; }
+  .result-card h3 {
+    color: var(--success);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .result-card p { font-size: 0.88rem; color: var(--muted); margin-bottom: 20px; font-weight: 400; }
+
+  /* ── Preview panel ── */
+  .preview-canvas-wrap {
+    background: white;
+    border: 1px solid var(--rule);
+    overflow: hidden;
+    position: relative;
+  }
+  .preview-canvas-wrap canvas {
+    display: block;
+    width: 100%;
+  }
+  .preview-placeholder {
+    height: 280px;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 400;
+  }
+  .preview-placeholder svg { display: block; margin: 0 auto 12px; opacity: 0.2; }
+
+  /* ── Char map grid ── */
+  .char-map-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+    gap: 4px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 4px;
+  }
+  .char-tile {
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    font-size: 1.1rem;
+    cursor: default;
+    transition: background 0.1s;
+    position: relative;
+  }
+  .char-tile:hover { background: #f0f3ff; border-color: var(--accent); }
+  .char-tile .tile-code {
+    position: absolute;
+    bottom: 1px;
+    right: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.38rem;
+    color: var(--rule);
+  }
+
+  /* ── Divider ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 28px 0;
+  }
+
+  /* ── Spinner ── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .spinner.dark {
+    border-color: rgba(0,0,0,0.15);
+    border-top-color: var(--accent);
+  }
+
+  /* ── Error ── */
+  .error-msg {
+    background: #fff3f0;
+    border: 1px solid #f5c0b0;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    color: var(--accent2);
+    margin-top: 12px;
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+
+  /* ── Info box ── */
+  .info-box {
+    background: var(--cream);
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.6;
+    font-weight: 400;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    header { padding: 0 16px; }
+    main { padding: 32px 16px 80px; }
+    .steps { grid-template-columns: 1fr; }
+    .checkbox-group { grid-template-columns: 1fr; }
+    .card { padding: 24px 20px; }
+    nav button { padding: 0 12px; font-size: 0.68rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    HandFont <span>v1.0</span>
+  </div>
+  <nav>
+    <button class="active" onclick="showPage('home', this)">Home</button>
+    <button onclick="showPage('generate', this)">Generate Sheet</button>
+    <button onclick="showPage('build', this)">Build Font</button>
+    <button onclick="showPage('charmap', this)">Char Map</button>
+    <button onclick="showPage('test', this)">Test Font</button>
+    <button onclick="showPage('playground', this)">Playground</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ── HOME ── -->
+  <section class="page active" id="page-home">
+    <div class="hero">
+      <p class="hero-eyebrow">Custom Handwriting Fonts</p>
+      <h1>Turn your<br>handwriting into<br>a <em>real font</em></h1>
+      <p>Print a template, fill in every character by hand, scan it back, and download a complete font family in TTF, OTF, and WOFF2.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="showPage('generate', document.querySelectorAll('nav button')[1])">
+          ↓ Download Template
+        </button>
+        <button class="btn btn-outline" onclick="showPage('build', document.querySelectorAll('nav button')[2])">
+          Upload Scans →
+        </button>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">Step 01</div>
+        <h3>Generate your template</h3>
+        <p>Choose your character sets and download a print-ready PDF. Works perfectly opened on iPad for Apple Pencil input.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Step 02</div>
+        <h3>Fill in every character</h3>
+        <p>Write each character in its cell. Use the blue baseline as a guide. Keep size and slant consistent throughout.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Step 03</div>
+        <h3>Upload &amp; get your font</h3>
+        <p>Upload the completed pages. The app extracts each glyph, vectorises it, and packages a full font set you can install.</p>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>iPad tip:</strong> Open the PDF in the Files app, then use Markup or any drawing app with a layer on top. When done, export as a flat image or PDF and upload it in the Build step. The app handles the rest automatically.
+    </div>
+  </section>
+
+
+  <!-- ── GENERATE ── -->
+  <section class="page" id="page-generate">
+    <div class="card">
+      <div class="card-header">
+        <h2>Generate Template Sheet</h2>
+        <span class="badge">Step 1</span>
+      </div>
+
+      <label for="fontNameInput">Font Name</label>
+      <input type="text" id="fontNameInput" placeholder="e.g. My Handwriting" value="My Font">
+
+      <label>Character Sets to Include</label>
+      <div class="checkbox-group">
+        <div class="checkbox-item checked" data-key="basic" onclick="toggleCheck(this)">
+          <input type="checkbox" checked>
+          <div class="check-indicator"></div>
+          <span class="check-label">A–Z &amp; a–z</span>
+          <span class="check-count">52</span>
+        </div>
+        <div class="checkbox-item checked" data-key="numbers" onclick="toggleCheck(this)">
+          <input type="checkbox" checked>
+          <div class="check-indicator"></div>
+          <span class="check-label">Numbers 0–9</span>
+          <span class="check-count">10</span>
+        </div>
+        <div class="checkbox-item checked" data-key="punctuation" onclick="toggleCheck(this)">
+          <input type="checkbox" checked>
+          <div class="check-indicator"></div>
+          <span class="check-label">Punctuation &amp; symbols</span>
+          <span class="check-count">~50</span>
+        </div>
+        <div class="checkbox-item checked" data-key="extended" onclick="toggleCheck(this)">
+          <input type="checkbox" checked>
+          <div class="check-indicator"></div>
+          <span class="check-label">Extended / accented</span>
+          <span class="check-count">~150</span>
+        </div>
+      </div>
+
+      <div id="sheetPreview" style="margin-bottom:24px">
+        <div class="preview-canvas-wrap">
+          <div class="preview-placeholder">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/>
+              <line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/>
+              <line x1="15" y1="9" x2="15" y2="21"/>
+            </svg>
+            PDF preview — download to view in your PDF reader
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" id="downloadBtn" onclick="downloadSheet()">
+          <span id="downloadBtnText">↓ Download PDF Template</span>
+        </button>
+        <span id="downloadStatus" style="font-size:0.78rem;color:var(--muted)"></span>
+      </div>
+
+      <div id="downloadError" class="error-msg"></div>
+
+      <hr class="divider">
+      <div class="info-box">
+        The PDF is A4, set up for 10 columns of cells. Each cell has a blue baseline guide and a faint midline.
+        The reference character is shown small in the top-left corner of each cell — just write over it in your own hand.
+        Page count depends on which character sets you selected.
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── BUILD ── -->
+  <section class="page" id="page-build">
+    <div class="card">
+      <div class="card-header">
+        <h2>Build Your Font</h2>
+        <span class="badge">Step 3</span>
+      </div>
+
+      <label for="fontNameBuild">Font Name</label>
+      <input type="text" id="fontNameBuild" placeholder="e.g. My Handwriting" value="My Font">
+
+      <label>Upload Completed Sheet Pages</label>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="pageUpload" accept="image/*,application/pdf" multiple
+               onchange="handleFiles(this.files)">
+        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <h3>Drop pages here or click to browse</h3>
+        <p>JPEG, PNG, or PDF — one file per page, in order</p>
+      </div>
+
+      <div id="fileList" class="file-list"></div>
+
+      <hr class="divider">
+
+      <div id="buildProgress" style="display:none">
+        <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="progress-label" id="progressLabel">Uploading pages…</div>
+      </div>
+
+      <div id="buildError" class="error-msg"></div>
+
+      <div style="margin-top:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" id="buildBtn" onclick="buildFont()" disabled>
+          <span id="buildBtnText">Build Font</span>
+        </button>
+        <span style="font-size:0.78rem;color:var(--muted)">You'll receive a ZIP with TTF, OTF &amp; WOFF2</span>
+      </div>
+
+      <div id="buildResult" class="result-card">
+        <h3>✓ Font ready</h3>
+        <p>Your handwriting font has been generated. The ZIP contains TTF (desktop), OTF, and WOFF2 (web) versions.</p>
+        <button class="btn btn-primary" id="downloadFontBtn">↓ Download Font ZIP</button>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── CHAR MAP ── -->
+  <section class="page" id="page-charmap">
+    <div class="card">
+      <div class="card-header">
+        <h2>Character Map</h2>
+        <span class="badge">Reference</span>
+      </div>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:20px;font-weight:400">
+        Every character included in the template sheets, in the order they appear left-to-right, top-to-bottom across all pages.
+      </p>
+
+      <div style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap" id="charSetFilter">
+        <button class="btn btn-primary" onclick="filterChars('all', this)" style="padding:8px 14px;font-size:0.7rem">All</button>
+        <button class="btn btn-outline" onclick="filterChars('upper', this)" style="padding:8px 14px;font-size:0.7rem">A–Z</button>
+        <button class="btn btn-outline" onclick="filterChars('lower', this)" style="padding:8px 14px;font-size:0.7rem">a–z</button>
+        <button class="btn btn-outline" onclick="filterChars('numbers', this)" style="padding:8px 14px;font-size:0.7rem">0–9</button>
+        <button class="btn btn-outline" onclick="filterChars('punct', this)" style="padding:8px 14px;font-size:0.7rem">Punct</button>
+        <button class="btn btn-outline" onclick="filterChars('extended', this)" style="padding:8px 14px;font-size:0.7rem">Extended</button>
+      </div>
+
+      <div class="char-map-grid" id="charMapGrid"></div>
+
+      <hr class="divider">
+      <div class="info-box">
+        Hover any character to see its Unicode code point. The template PDF lists each character in the same order shown here.
+        Total: <strong id="charTotal">—</strong> characters across all sets.
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── TEST FONT ── -->
+  <section class="page" id="page-test">
+    <div class="card">
+      <div class="card-header">
+        <h2>Live Font Tester</h2>
+        <span class="badge">Experimental</span>
+      </div>
+      
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:20px;font-weight:400">
+        Upload a generated font file (TTF, OTF, or WOFF2) to test it directly in your browser.
+      </p>
+
+      <div class="upload-zone" id="testUploadZone" style="padding: 30px; margin-bottom: 24px;">
+        <input type="file" id="fontFileLoader" accept=".ttf,.otf,.woff2" onchange="loadTestFont(this.files[0])">
+        <svg class="upload-icon" style="width:32px; height:32px; margin-bottom:8px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M16 8l-4-4-4 4M12 4v12"/>
+        </svg>
+        <h3 id="fontStatusText">Click to load a font file</h3>
+        <p>Supports .ttf, .otf, and .woff2</p>
+      </div>
+
+      <label for="testerInput">Type here to test</label>
+      <textarea id="testerInput" placeholder="The quick brown fox jumps over the lazy dog..."
+                style="width:100%; height:200px; padding:20px; font-size:42px; line-height:1.4; border:1.5px solid var(--rule); background:var(--paper); outline:none; font-family:inherit; resize:vertical; transition:border-color 0.2s;"></textarea>
+      
+      <div style="margin-top:20px; display:flex; gap:20px; align-items:center;">
+        <div style="flex:1">
+          <label>Font Size</label>
+          <input type="range" min="12" max="160" value="42" style="width:100%" oninput="updateFontSize(this.value)">
+        </div>
+        <div style="width:80px">
+          <span id="fontSizeVal" style="font-family:'DM Mono',monospace; font-size:0.8rem">42px</span>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="info-box">
+        This uses the browser's <code>FontFace</code> API to dynamically load your font. If your font looks "jagged", it might be due to low-resolution scans or handwriting that was too small for the extraction process.
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── PLAYGROUND ── -->
+  <section class="page" id="page-playground">
+    <div class="card">
+      <div class="card-header">
+        <h2>HandFont Playground</h2>
+        <span class="badge">Instant</span>
+      </div>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:20px;font-weight:400">
+        Skip the downloads. Upload your completed PDF or scan, and start typing immediately.
+      </p>
+
+      <div class="upload-zone" id="playgroundUploadZone" style="padding: 40px; margin-bottom: 24px;">
+        <input type="file" id="playgroundFile" accept="image/*,application/pdf" multiple onchange="handlePlaygroundUpload(this.files)">
+        <svg class="upload-icon" style="width:40px; height:40px; margin-bottom:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"></path>
+          <polyline points="13 2 13 9 20 9"></polyline>
+        </svg>
+        <h3 id="playgroundStatus">Drop sheets here</h3>
+        <p>The font will be built and loaded automatically</p>
+      </div>
+
+      <div id="playgroundProgress" style="display:none; margin-bottom: 24px;">
+        <div class="progress-bar-wrap"><div class="progress-bar" id="pgProgressBar"></div></div>
+        <div class="progress-label" id="pgProgressLabel">Processing...</div>
+      </div>
+
+      <div id="playgroundError" class="error-msg"></div>
+
+      <div id="playgroundTestArea" style="display:none">
+        <label for="playgroundInput">Magic! Start typing below:</label>
+        <textarea id="playgroundInput" placeholder="The quick brown fox..."
+                  style="width:100%; height:250px; padding:20px; font-size:48px; line-height:1.4; border:1.5px solid var(--rule); background:var(--paper); outline:none; font-family:inherit; resize:vertical; transition:border-color 0.2s;"></textarea>
+        
+        <div style="margin-top:20px; display:flex; gap:20px; align-items:center;">
+            <div style="flex:1">
+              <label>Adjust Scale</label>
+              <input type="range" min="12" max="160" value="48" style="width:100%" oninput="updatePlaygroundSize(this.value)">
+            </div>
+            <div style="width:80px">
+              <span id="pgSizeVal" style="font-family:'DM Mono',monospace; font-size:0.8rem">48px</span>
+            </div>
+            <button class="btn btn-outline" id="pgDownloadBtn" style="padding:8px 16px; font-size:0.7rem">Download .TTF</button>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="info-box">
+        The playground handles extraction, vectorization, and previewing in one step. It creates a temporary font that lives in your browser session.
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ── Navigation ─────────────────────────────────────────────────────────────
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'charmap') buildCharMap();
+}
+
+// ── Checkboxes ──────────────────────────────────────────────────────────────
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+}
+
+// ── Download Sheet ──────────────────────────────────────────────────────────
+async function downloadSheet() {
+  const btn = document.getElementById('downloadBtn');
+  const txt = document.getElementById('downloadBtnText');
+  const status = document.getElementById('downloadStatus');
+  const errEl = document.getElementById('downloadError');
+  errEl.classList.remove('visible');
+
+  const fontName = document.getElementById('fontNameInput').value.trim() || 'My Font';
+  const checks = document.querySelectorAll('.checkbox-item');
+  const opts = {};
+  checks.forEach(c => { opts[c.dataset.key] = c.classList.contains('checked'); });
+
+  txt.innerHTML = '<span class="spinner"></span> Generating…';
+  btn.disabled = true;
+  status.textContent = '';
+
+  try {
+    const res = await fetch('/api/generate-sheet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fontName,
+        extendedChars: opts.extended !== false,
+        punctuation: opts.punctuation !== false,
+      })
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${fontName.replace(/\s+/g,'_')}_template.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+    status.textContent = '✓ Downloaded!';
+  } catch (e) {
+    errEl.textContent = 'Error: ' + e.message;
+    errEl.classList.add('visible');
+  } finally {
+    txt.textContent = '↓ Download PDF Template';
+    btn.disabled = false;
+  }
+}
+
+// ── File upload ─────────────────────────────────────────────────────────────
+let uploadedFiles = [];
+
+function handleFiles(fileList) {
+  uploadedFiles = [...uploadedFiles, ...Array.from(fileList)];
+  // Sort by name to keep page order
+  uploadedFiles.sort((a, b) => a.name.localeCompare(b.name));
+  renderFileList();
+  document.getElementById('buildBtn').disabled = uploadedFiles.length === 0;
+}
+
+function renderFileList() {
+  const el = document.getElementById('fileList');
+  el.innerHTML = '';
+  uploadedFiles.forEach((f, i) => {
+    const size = f.size > 1024*1024
+      ? (f.size/1024/1024).toFixed(1) + ' MB'
+      : (f.size/1024).toFixed(0) + ' KB';
+    el.innerHTML += `
+      <div class="file-item">
+        <span class="file-item-icon">📄</span>
+        <span class="file-item-name">${f.name}</span>
+        <span class="file-item-size">${size}</span>
+        <button class="file-item-remove" onclick="removeFile(${i})" title="Remove">✕</button>
+      </div>`;
+  });
+}
+
+function removeFile(idx) {
+  uploadedFiles.splice(idx, 1);
+  renderFileList();
+  document.getElementById('buildBtn').disabled = uploadedFiles.length === 0;
+}
+
+// Drag & drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+
+// ── Build font ──────────────────────────────────────────────────────────────
+let fontZipBlob = null;
+
+async function buildFont() {
+  const btn = document.getElementById('buildBtn');
+  const txt = document.getElementById('buildBtnText');
+  const errEl = document.getElementById('buildError');
+  const progressWrap = document.getElementById('buildProgress');
+  const progressBar = document.getElementById('progressBar');
+  const progressLabel = document.getElementById('progressLabel');
+  const resultCard = document.getElementById('buildResult');
+
+  errEl.classList.remove('visible');
+  resultCard.classList.remove('visible');
+
+  if (uploadedFiles.length === 0) return;
+
+  const fontName = document.getElementById('fontNameBuild').value.trim() || 'My Font';
+
+  txt.innerHTML = '<span class="spinner"></span> Processing…';
+  btn.disabled = true;
+  progressWrap.style.display = 'block';
+  progressBar.style.width = '0%';
+  progressLabel.textContent = 'Uploading pages…';
+
+  const form = new FormData();
+  form.append('fontName', fontName);
+  uploadedFiles.forEach(f => form.append('pages', f));
+
+  // Fake progress while waiting
+  let prog = 0;
+  const interval = setInterval(() => {
+    prog = Math.min(prog + Math.random() * 8, 88);
+    progressBar.style.width = prog + '%';
+    if (prog < 30) progressLabel.textContent = 'Uploading pages…';
+    else if (prog < 55) progressLabel.textContent = 'Detecting cells…';
+    else if (prog < 75) progressLabel.textContent = 'Extracting glyphs…';
+    else progressLabel.textContent = 'Building font files…';
+  }, 400);
+
+  try {
+    const res = await fetch('/api/build-font', { method: 'POST', body: form });
+    clearInterval(interval);
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(err.error || 'Server error');
+    }
+
+    progressBar.style.width = '100%';
+    progressLabel.textContent = 'Done!';
+    fontZipBlob = await res.blob();
+    resultCard.classList.add('visible');
+    document.getElementById('downloadFontBtn').onclick = () => {
+      const url = URL.createObjectURL(fontZipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${fontName.replace(/\s+/g,'_')}_fonts.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+  } catch (e) {
+    clearInterval(interval);
+    errEl.textContent = 'Error: ' + e.message;
+    errEl.classList.add('visible');
+    progressWrap.style.display = 'none';
+  } finally {
+    txt.textContent = 'Build Font';
+    btn.disabled = false;
+  }
+}
+
+// ── Char Map ────────────────────────────────────────────────────────────────
+const CHAR_SETS = {
+  upper:    [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],
+  lower:    [...'abcdefghijklmnopqrstuvwxyz'],
+  numbers:  [...'0123456789'],
+  punct:    [...'.,;:!?\'"-()[]{}@#$%&*/\\+<>=_~`^|','«','»','¬','²','³','©','®','™','€','£','¥','°','±','×','÷','µ','¶','§'],
+  extended: [
+    'À','Á','Â','Ã','Ä','Å','Æ','Ç','È','É','Ê','Ë',
+    'Ì','Í','Î','Ï','Ð','Ñ','Ò','Ó','Ô','Õ','Ö','Ø',
+    'Ù','Ú','Û','Ü','Ý','Þ','ß',
+    'à','á','â','ã','ä','å','æ','ç','è','é','ê','ë',
+    'ì','í','î','ï','ð','ñ','ò','ó','ô','õ','ö','ø',
+    'ù','ú','û','ü','ý','þ','ÿ',
+  ]
+};
+
+let currentFilter = 'all';
+
+function buildCharMap() {
+  const grid = document.getElementById('charMapGrid');
+  let chars = [];
+  if (currentFilter === 'all') {
+    chars = [...CHAR_SETS.upper,...CHAR_SETS.lower,...CHAR_SETS.numbers,...CHAR_SETS.punct,...CHAR_SETS.extended];
+  } else {
+    chars = CHAR_SETS[currentFilter] || [];
+  }
+
+  document.getElementById('charTotal').textContent =
+    (CHAR_SETS.upper.length + CHAR_SETS.lower.length + CHAR_SETS.numbers.length +
+     CHAR_SETS.punct.length + CHAR_SETS.extended.length);
+
+  grid.innerHTML = chars.map(ch => `
+    <div class="char-tile" title="U+${ch.codePointAt(0).toString(16).toUpperCase().padStart(4,'0')}">
+      ${ch}
+      <span class="tile-code">${ch.codePointAt(0).toString(16).toUpperCase().padStart(4,'0')}</span>
+    </div>`).join('');
+}
+
+function filterChars(key, btn) {
+  currentFilter = key;
+  document.querySelectorAll('#charSetFilter button').forEach(b => {
+    b.className = 'btn btn-outline';
+    b.style.cssText = 'padding:8px 14px;font-size:0.7rem';
+  });
+  btn.className = 'btn btn-primary';
+  btn.style.cssText = 'padding:8px 14px;font-size:0.7rem';
+  buildCharMap();
+}
+
+// ── Font Tester ─────────────────────────────────────────────────────────────
+let fontCount = 0;
+
+async function loadTestFont(file) {
+  if (!file) return;
+  
+  const statusEl = document.getElementById('fontStatusText');
+  const tester = document.getElementById('testerInput');
+  const fontNameLabel = `TestFont_${++fontCount}`;
+  
+  statusLoading('Loading font: ' + file.name + '...');
+  
+  try {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const font = new FontFace(fontNameLabel, e.target.result);
+        await font.load();
+        document.fonts.add(font);
+        
+        tester.style.fontFamily = `'${fontNameLabel}', 'Syne', sans-serif`;
+        statusSuccess('Loaded: ' + file.name);
+        tester.placeholder = "Type here to see " + file.name + " in action...";
+        tester.focus();
+      } catch (err) {
+        statusError('Font load failed: ' + err.message);
+      }
+    };
+    reader.onerror = () => statusError('File read error');
+    reader.readAsArrayBuffer(file);
+    
+  } catch (e) {
+    statusError('Error: ' + e.message);
+  }
+}
+
+function statusLoading(msg) {
+  document.getElementById('fontStatusText').textContent = msg;
+  document.getElementById('testUploadZone').style.borderColor = 'var(--accent)';
+}
+
+function statusSuccess(msg) {
+  document.getElementById('fontStatusText').textContent = msg;
+  document.getElementById('testUploadZone').style.borderColor = 'var(--success)';
+}
+
+function statusError(msg) {
+  document.getElementById('fontStatusText').textContent = msg;
+  document.getElementById('testUploadZone').style.borderColor = 'var(--accent2)';
+}
+
+function updateFontSize(val) {
+  document.getElementById('testerInput').style.fontSize = val + 'px';
+  document.getElementById('fontSizeVal').textContent = val + 'px';
+}
+
+// ── Playground ─────────────────────────────────────────────────────────────
+async function handlePlaygroundUpload(fileList) {
+    if (fileList.length === 0) return;
+    const files = Array.from(fileList);
+    
+    const status = document.getElementById('playgroundStatus');
+    const pgError = document.getElementById('playgroundError');
+    const pgProgress = document.getElementById('playgroundProgress');
+    const pgProgressBar = document.getElementById('pgProgressBar');
+    const pgProgressLabel = document.getElementById('pgProgressLabel');
+    const pgTestArea = document.getElementById('playgroundTestArea');
+    const pgInput = document.getElementById('playgroundInput');
+    const pgDownloadBtn = document.getElementById('pgDownloadBtn');
+
+    pgError.classList.remove('visible');
+    pgProgress.style.display = 'block';
+    pgProgressBar.style.width = '0%';
+    pgProgressLabel.textContent = 'Processing PDF...';
+    pgTestArea.style.display = 'none';
+
+    const form = new FormData();
+    form.append('fontName', 'PlaygroundFont');
+    files.forEach(f => form.append('pages', f));
+
+    // Fake progress
+    let pgVal = 0;
+    const pgTimer = setInterval(() => {
+        pgVal = Math.min(pgVal + Math.random() * 12, 90);
+        pgProgressBar.style.width = pgVal + '%';
+        if (pgVal < 40) pgProgressLabel.textContent = 'Uploading pages...';
+        else if (pgVal < 70) pgProgressLabel.textContent = 'Analyzing handwriting...';
+        else pgProgressLabel.textContent = 'Building font engine...';
+    }, 450);
+
+    try {
+        const res = await fetch('/api/build-font-direct', { method: 'POST', body: form });
+        clearInterval(pgTimer);
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: 'Unknown build error' }));
+            throw new Error(err.error || 'Server build failed - Check your handwritten characters');
+        }
+
+        const ttfBlob = await res.blob();
+        const ttfUrl = URL.createObjectURL(ttfBlob);
+        
+        // Font name for loading
+        const fontName = `PG_Font_${Date.now()}`;
+        const font = new FontFace(fontName, await ttfBlob.arrayBuffer());
+        await font.load();
+        document.fonts.add(font);
+
+        pgProgressBar.style.width = '100%';
+        pgProgressLabel.textContent = 'Font Built & Loaded Successfully!';
+        
+        pgInput.style.fontFamily = `'${fontName}', 'Syne', sans-serif`;
+        pgInput.placeholder = "Great! Your handwriting is now a font. Magic is happening as you type...";
+        pgInput.focus();
+
+        pgDownloadBtn.onclick = () => {
+            const a = document.createElement('a');
+            a.href = ttfUrl;
+            a.download = `${fontName}.ttf`;
+            a.click();
+        };
+        pgDownloadBtn.style.display = 'block';
+
+        pgTestArea.style.display = 'block';
+        status.innerHTML = '✓ Playground Ready';
+        
+    } catch (e) {
+        clearInterval(pgTimer);
+        pgError.textContent = 'Error: ' + e.message;
+        pgError.classList.add('visible');
+    }
+}
+
+function updatePlaygroundSize(val) {
+    document.getElementById('playgroundInput').style.fontSize = val + 'px';
+    document.getElementById('pgSizeVal').textContent = val + 'px';
+}
+</script>
+</body>
+</html>
