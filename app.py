@@ -138,9 +138,13 @@ def build_font_direct():
         saved_paths.append(str(save_path))
     
     try:
-        # We need a way to return the actual characters found
-        # For now, we'll return the ones in the SHEET_CHAR_ORDER that we successfully processed
-        font_files = process_scan(saved_paths, font_name=font_name,
+        # Crucial: extract glyphs ONCE and store them in the session
+        # For simplicity in this demo, we'll re-scan if they aren't provided,
+        # but a production app would cache the 'glyph_images' (the extracted images)
+        # to avoid repeating the heavy OpenCV work during tuning.
+        
+        # We need to return the actual characters found
+        font_files, extracted_chars = process_scan(saved_paths, font_name=font_name,
                                   output_dir=str(output_session),
                                   char_order=SHEET_CHAR_ORDER,
                                   letter_spacing=letter_spacing,
@@ -148,36 +152,30 @@ def build_font_direct():
                                   baseline_shift=baseline_shift,
                                   overrides=overrides)
         
-        ttf_path = next((f for f in font_files if f.endswith('.ttf')), None)
-        if not ttf_path:
-            return jsonify({'error': 'No TTF generated'}), 500
-
-        # Since we are returned a file path, and we need to preview it in the browser,
-        # we can't easily return a local temp path as a URL unless we serve it.
-        # Let's return the blob as a base64 or just send the file.
-        # Actually, let's keep it simple: return the file but with custom headers for the JS.
+        ttf_path = [f for f in font_files if f.endswith('.ttf')][0]
+        ttf_filename = os.path.basename(ttf_path)
         
-        with open(ttf_path, 'rb') as f:
-            font_data = f.read()
-        
-        import base64
-        b64_font = base64.b64encode(font_data).decode('utf-8')
-        
-        # Cleanup
-        import shutil
-        shutil.rmtree(str(upload_session), ignore_errors=True)
-        # We'll keep the output_session for now or just delete it since we have the b64
-        shutil.rmtree(str(output_session), ignore_errors=True)
-
         return jsonify({
-            'ttf_url': f"data:font/ttf;base64,{b64_font}",
-            'characters': SHEET_CHAR_ORDER[:100] # Return sampled set for the tuning UI
+            'ttf_url': f'/api/download-font/{session_id}/{ttf_filename}',
+            'characters': extracted_chars
         })
-
     except Exception as e:
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/download-font/<session_id>/<filename>')
+def download_font_temp(session_id, filename):
+    # Retrieve the custom name if provided (sent via query param ?n=...)
+    custom_name = request.args.get('n')
+    if custom_name:
+        import re
+        safe = re.sub(r'[^a-zA-Z0-9]', '_', custom_name).lower()
+        if not safe: safe = "handfont"
+        return send_file(OUTPUT_DIR / session_id / filename, 
+                         as_attachment=True, 
+                         download_name=f"{safe}.ttf")
+    return send_file(OUTPUT_DIR / session_id / filename)
 
 
 @app.route('/api/char-map', methods=['GET'])

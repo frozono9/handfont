@@ -34,7 +34,6 @@
     line-height: 1.5;
   }
 
-  /* ── Background ruled lines ── */
   .grid-bg {
     position: fixed;
     inset: 0;
@@ -47,7 +46,6 @@
     z-index: 0;
   }
 
-  /* ── Header ── */
   header {
     position: sticky;
     top: 0;
@@ -73,19 +71,6 @@
     gap: 12px;
   }
 
-  .logo span {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.6rem;
-    font-weight: 500;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    border: 1px solid var(--rule);
-    padding: 2px 6px;
-    border-radius: 4px;
-  }
-
-  /* ── Layout ── */
   main {
     max-width: 1400px;
     margin: 0 auto;
@@ -96,8 +81,8 @@
 
   .layout-grid {
     display: grid;
-    grid-template-columns: 420px 1fr;
-    gap: 40px;
+    grid-template-columns: 360px 1fr;
+    gap: 32px;
     align-items: start;
   }
 
@@ -109,20 +94,12 @@
     gap: 24px;
   }
 
-  /* ── Typography ── */
   .section-title {
     font-family: 'Instrument Serif', serif;
     font-size: 2.8rem;
     line-height: 1;
     margin-bottom: 8px;
     font-style: italic;
-  }
-
-  .section-desc {
-    font-size: 0.95rem;
-    color: var(--muted);
-    margin-bottom: 32px;
-    font-weight: 400;
   }
 
   .eyebrow {
@@ -136,7 +113,6 @@
     display: block;
   }
 
-  /* ── Cards ── */
   .card {
     background: var(--card-bg);
     border: 1px solid var(--rule);
@@ -155,20 +131,72 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--cream);
+    cursor: pointer;
+    user-select: none;
   }
 
-  .card-title {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+  .card-body {
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+  
+  .card.collapsed .card-body {
+    max-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    opacity: 0;
+    margin: 0;
+    pointer-events: none;
+    display: none;
+  }
+
+  .collapse-icon {
+    transition: transform 0.3s ease;
     color: var(--muted);
-    font-weight: 700;
   }
 
-  /* ── Form Elements ── */
+  .card.collapsed .collapse-icon {
+    transform: rotate(-90deg);
+  }
+
+  /* TUNING STABILITY & PADDING FIX */
+  .char-card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+    overflow: visible;
+  }
+
+  .char-preview {
+    font-size: 2.2rem;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--cream);
+    border-radius: 8px;
+    border: 1px dashed var(--rule);
+    transition: transform 0.1s ease;
+    user-select: none;
+    line-height: 1; /* Keep it centered */
+  }
+
+  .char-control {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .char-control input[type="range"] {
+    margin: 4px 0;
+  }
+
   .form-group {
     margin-bottom: 20px;
   }
@@ -188,13 +216,13 @@
     letter-spacing: 0.05em;
   }
 
-  .val-badge {
+  .val-badge-tiny {
     font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     color: var(--accent);
     background: var(--accent-soft);
-    padding: 2px 6px;
-    border-radius: 4px;
+    padding: 1px 4px;
+    border-radius: 3px;
   }
 
   input[type="text"] {
@@ -211,13 +239,6 @@
     transition: all 0.2s;
   }
 
-  input[type="text"]:focus {
-    border-color: var(--accent);
-    background: #fff;
-    box-shadow: 0 0 0 4px var(--accent-soft);
-  }
-
-  /* ── Range Sliders ── */
   input[type="range"] {
     -webkit-appearance: none;
     width: 100%;
@@ -229,21 +250,15 @@
 
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     background: var(--accent);
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid #fff;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.1s;
   }
 
-  input[type="range"]::-webkit-slider-thumb:hover {
-    transform: scale(1.1);
-  }
-
-  /* ── Buttons ── */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -270,25 +285,8 @@
   .btn-primary:hover {
     background: var(--accent);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(42, 77, 240, 0.2);
   }
 
-  .btn-primary:active {
-    transform: translateY(0);
-  }
-
-  .btn-outline {
-    background: #fff;
-    color: var(--ink);
-    border: 1px solid var(--rule);
-  }
-
-  .btn-outline:hover {
-    border-color: var(--ink);
-    background: var(--paper);
-  }
-
-  /* ── Upload Area ── */
   .upload-area {
     border: 2px dashed var(--rule);
     border-radius: var(--radius);
@@ -310,14 +308,8 @@
     height: 40px;
     margin-bottom: 16px;
     color: var(--muted);
-    transition: color 0.2s;
   }
 
-  .upload-area:hover .upload-icon {
-    color: var(--accent);
-  }
-
-  /* ── Interactive Editor ── */
   .editor-wrapper {
     background: #fff;
     border: 1px solid var(--rule);
@@ -328,35 +320,6 @@
     flex-direction: column;
     min-height: 600px;
     position: relative;
-  }
-
-  /* ── Collapsible Sidebar Cards ── */
-  .card-body {
-    transition: all 0.3s ease;
-    overflow: hidden;
-  }
-  
-  .card.collapsed .card-body {
-    max-height: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    opacity: 0;
-    margin: 0;
-    pointer-events: none;
-  }
-
-  .card-header {
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .collapse-icon {
-    transition: transform 0.3s ease;
-    color: var(--muted);
-  }
-
-  .card.collapsed .collapse-icon {
-    transform: rotate(-90deg);
   }
 
   .editor-toolbar {
@@ -371,7 +334,7 @@
 
   .editor-input {
     flex: 1;
-    padding: 60px;
+    padding: 40px;
     border: none;
     outline: none;
     resize: none;
@@ -380,7 +343,6 @@
     color: var(--ink);
     background: transparent;
     font-family: inherit;
-    background-image: none;
     min-height: 500px;
     box-sizing: border-box;
     transition: padding-right 0.3s ease, font-size 0.1s ease;
@@ -390,19 +352,25 @@
     padding-right: 360px;
   }
 
-  /* ── Character Overrides (Floating Searchable) ── */
+  /* FIX: Scrollable content and relative panel */
+  .editor-scroll-container {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: #fff;
+  }
+
   .overrides-panel {
     display: none;
     position: absolute;
-    top: 70px;
-    right: 20px;
+    top: 0;
+    right: 0;
     width: 320px;
-    height: calc(100% - 90px);
-    max-height: 800px;
+    height: 100%;
     background: #fff;
-    border: 1px solid var(--rule);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-md);
+    border-left: 1px solid var(--rule);
     z-index: 1000;
     padding: 0;
     overflow-y: auto;
@@ -433,12 +401,6 @@
     border-radius: 12px;
     align-items: center;
     border: 1px solid transparent;
-    transition: all 0.2s;
-  }
-
-  .char-card:hover {
-    border-color: var(--accent-soft);
-    background: #fdfcf9;
   }
 
   .char-preview {
@@ -451,54 +413,13 @@
     border: 1px solid var(--cream);
     border-radius: 8px;
     font-size: 1.4rem;
-    color: var(--ink);
-    margin: 0;
   }
 
   .char-control {
     flex: 1;
-  }
-
-  .char-control label {
-    font-size: 0.6rem;
-    color: var(--muted);
-    margin-bottom: 2px;
-    display: block;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .char-control input[type="range"] {
-    height: 2px;
-    margin-bottom: 4px;
-  }
-
-  .char-control input[type="range"]::-webkit-slider-thumb {
-    width: 14px;
-    height: 14px;
-  }
-
-  .val-badge-tiny {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.6rem;
-    color: var(--accent);
-    background: var(--accent-soft);
-    padding: 1px 4px;
-    border-radius: 3px;
-  }
-    color: var(--muted);
-    text-align: center;
-  }
-
-  .char-control {
     display: flex;
     flex-direction: column;
     gap: 4px;
-  }
-
-  .char-control label {
-    font-size: 0.6rem;
-    opacity: 0.7;
   }
 
   .overrides-toggle {
@@ -511,13 +432,7 @@
     gap: 6px;
     padding: 4px 10px;
     border-radius: 4px;
-    transition: all 0.2s;
     background: var(--cream);
-  }
-
-  .overrides-toggle:hover {
-    background: var(--rule);
-    color: var(--ink);
   }
 
   .overrides-toggle.active {
@@ -525,19 +440,6 @@
     color: var(--accent);
   }
 
-  /* ── File List ── */
-  .file-chip {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    background: var(--cream);
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-  }
-
-  /* ── Progress ── */
   .loading-overlay {
     position: absolute;
     inset: 0;
@@ -563,160 +465,137 @@
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── Mobile ── */
-  @media (max-width: 1000px) {
-    .layout-grid {
-      grid-template-columns: 1fr;
-    }
-    .sidebar {
-      position: static;
-    }
+  .error-msg {
+    color: var(--accent2);
+    font-size: 0.75rem;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .error-msg.visible { display: block; }
+
+  .section-desc {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-bottom: 32px;
+    font-weight: 400;
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    handfont
-  </div>
+  <div class="logo">handfont</div>
 </header>
 
 <div class="grid-bg"></div>
 
 <main>
   <div class="layout-grid">
-    <!-- SIDEBAR: CONFIG & TEMPLATE (Step 1) -->
     <aside class="sidebar">
+      <!-- Step 1: Download -->
       <div class="card" id="step1Card">
         <div class="card-header" onclick="toggleCard('step1Card')">
           <div>
             <span class="eyebrow" style="margin:0">Step 1</span>
-            <h2 class="section-title" style="font-size: 1.8rem; margin:0"><em>Template</em></h2>
+            <h2 class="section-title" style="font-size: 1.4rem; margin:0"><em>Download</em></h2>
           </div>
-          <svg class="collapse-icon" style="width:20px; height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="collapse-icon" style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 9l-7 7-7-7"></path>
           </svg>
         </div>
-        
         <div class="card-body">
-          <p class="section-desc" style="margin-top:12px; margin-bottom:24px;">Download your grid and fill it by hand.</p>
-          
+          <p class="section-desc" style="margin-top:8px; margin-bottom:16px; font-size: 0.85rem;">Get your grid and fill it by hand.</p>
           <div class="form-group">
-            <label for="fontNameInput">Font Identity</label>
-            <input type="text" id="fontNameInput" placeholder="My Handwriting" value="My Font">
+            <label for="fontNameInput" style="font-size: 0.65rem;">Font Name</label>
+            <input type="text" id="fontNameInput" placeholder="My Handwriting" value="My Font" style="padding: 10px; font-size: 0.9rem;">
           </div>
-
-          <div class="form-group">
-            <label>Character Sets</label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
-              <div class="checkbox-item checked" data-key="basic" onclick="toggleCheck(this)" style="padding: 10px; border: 1px solid var(--rule); border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 600;">
-                <input type="checkbox" checked style="display:none">
-                <div class="check-dot" style="width:8px; height:8px; border-radius:50%; background: var(--accent)"></div>
-                A–Z / a–z
-              </div>
-              <div class="checkbox-item checked" data-key="numbers" onclick="toggleCheck(this)" style="padding: 10px; border: 1px solid var(--rule); border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 600;">
-                <input type="checkbox" checked style="display:none">
-                <div class="check-dot" style="width:8px; height:8px; border-radius:50%; background: var(--accent)"></div>
-                0–9
-              </div>
-            </div>
-          </div>
-
-          <button class="btn btn-primary" id="downloadBtn" onclick="downloadSheet()">
+          <button class="btn btn-primary" id="downloadBtn" onclick="downloadSheet()" style="padding: 12px;">
             <span id="downloadBtnText">Get PDF Template</span>
           </button>
           <div id="downloadError" class="error-msg"></div>
         </div>
       </div>
 
-      <div class="card" id="step2Card">
+      <!-- Step 2: Upload -->
+      <div class="card collapsed" id="step2Card">
         <div class="card-header" onclick="toggleCard('step2Card')">
           <div>
             <span class="eyebrow" style="margin:0">Step 2</span>
-            <h2 class="section-title" style="font-size: 1.8rem; margin:0"><em>Upload</em></h2>
+            <h2 class="section-title" style="font-size: 1.4rem; margin:0"><em>Upload</em></h2>
           </div>
-          <svg class="collapse-icon" style="width:20px; height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="collapse-icon" style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 9l-7 7-7-7"></path>
           </svg>
         </div>
-
         <div class="card-body">
-          <p class="section-desc" style="margin-top:12px; margin-bottom:24px;">Scan or photograph your pages in high resolution.</p>
-          
-          <div class="upload-area" id="playgroundUploadZone" style="position:relative">
+          <p class="section-desc" style="margin-top:8px; margin-bottom:16px; font-size: 0.85rem;">Scan your pages (PDF or JPG).</p>
+          <div class="upload-area" style="position:relative; padding: 24px 16px;">
             <input type="file" id="playgroundFile" accept="image/*,application/pdf" multiple onchange="handlePlaygroundUpload(this.files)" style="position:absolute; inset:0; opacity:0; cursor:pointer;">
-            <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <svg class="upload-icon" style="width:32px; height:32px; margin-bottom:8px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M12 16V8M12 8L9 11M12 8L15 11M4 16V17a2 2 0 002 2h12a2 2 0 002-2v-1M4 16a2 2 0 012-2h12a2 2 0 012 2"></path>
             </svg>
-            <h4 id="playgroundStatus" style="font-size: 0.9rem; font-weight: 700;">Drop your scans</h4>
-            <p style="font-size: 0.75rem; color: var(--muted)">PDF or high-quality JPG</p>
+            <h4 style="font-size: 0.8rem; font-weight: 700;">Drop scans here</h4>
           </div>
-
-          <div id="fileListContainer" style="display: none; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;"></div>
+          <div id="fileListContainer" style="display: none; flex-wrap: wrap; gap: 4px; margin-bottom: 16px;"></div>
           <div id="playgroundError" class="error-msg"></div>
         </div>
       </div>
     </aside>
 
-    <!-- MAIN: PLAYGROUND & TEST (Step 2) -->
     <section class="main-content">
-      <div class="editor-wrapper" id="playgroundTestArea">
-        <div class="loading-overlay" id="playgroundProgress">
-          <div class="spinner"></div>
-          <p id="pgProgressLabel" style="font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;">Loading...</p>
+      <!-- Step 3: Design Studio -->
+      <div class="card" id="step3Card" style="border:none; box-shadow:none; background:transparent">
+        <div class="card-header" style="background:transparent; border:none; padding: 0 0 24px 0;">
+          <h2 style="font-family: 'Instrument Serif', serif; font-size: 2.8rem; margin:0; font-style: italic;">The Studio</h2>
+          <p style="font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;">Write, tune, and refine your typeface</p>
         </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="editor-wrapper" id="playgroundTestArea" style="min-height: 800px; border:none; box-shadow:none; border-radius:12px; position:relative; overflow:hidden; background:var(--paper); border: 1px solid var(--rule);">
+            
+            <div class="loading-overlay" id="playgroundProgress" style="z-index: 1000;">
+              <div class="spinner"></div>
+              <p id="pgProgressLabel" style="font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); text-transform: uppercase;">Syncing Font...</p>
+            </div>
 
-        <div class="editor-toolbar">
-          <div style="display: flex; gap: 24px; flex: 1;">
-            <div style="width: 140px;">
-              <div class="label-row"><label>Scale</label><span class="val-badge" id="v-gs">1.0x</span></div>
-              <input type="range" id="pgScaleFactor" min="0.5" max="2.0" step="0.05" value="1.0" oninput="updatePlaygroundFont(); debouncedBackgroundRebuild()">
+            <div class="editor-toolbar" style="position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--rule); padding: 16px 20px; background: rgba(255,255,255,0.8); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+              <div style="display: flex; gap: 16px; flex: 1; align-items: center; flex-wrap: nowrap;">
+                <div style="flex: 1; min-width: 80px; max-width: 110px;">
+                  <div class="label-row" style="margin-bottom:2px"><label style="font-size:0.55rem">Scale</label><span class="val-badge-tiny" id="v-gs" style="font-size:0.55rem; padding: 0 3px;">1.0x</span></div>
+                  <input type="range" id="pgScaleFactor" min="0.5" max="2.0" step="0.05" value="1.0" oninput="updatePlaygroundFont(); debouncedBackgroundRebuild()">
+                </div>
+                <div style="flex: 1; min-width: 80px; max-width: 110px;">
+                  <div class="label-row" style="margin-bottom:2px"><label style="font-size:0.55rem">Spacing</label><span class="val-badge-tiny" id="v-lt" style="font-size:0.55rem; padding: 0 3px;">1.0x</span></div>
+                  <input type="range" id="pgLetterSpacing" min="0.5" max="2.5" step="0.05" value="1.0" oninput="updatePlaygroundFont()">
+                </div>
+                <div style="flex: 1; min-width: 80px; max-width: 110px;">
+                  <div class="label-row" style="margin-bottom:2px"><label style="font-size:0.55rem">Line</label><span class="val-badge-tiny" id="v-lh" style="font-size:0.55rem; padding: 0 3px;">1.2x</span></div>
+                  <input type="range" id="pgLineHeight" min="0.8" max="3.0" step="0.1" value="1.2" oninput="updatePlaygroundFont()">
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <div class="overrides-toggle" id="toggleOverrides" onclick="toggleOverridesPanel()" style="background: var(--cream); border: 1px solid var(--rule); font-weight: 700; cursor: pointer;">Studio Tuning</div>
+                <button class="btn btn-primary" id="pgDownloadBtn" style="padding: 10px 20px; width: auto; font-size: 0.7rem;">Export .TTF</button>
+              </div>
             </div>
-            <div style="width: 140px;">
-              <div class="label-row"><label>Shift</label><span class="val-badge" id="v-bs">0.0</span></div>
-              <input type="range" id="pgBaselineShift" min="-0.5" max="0.5" step="0.01" value="0.0" oninput="updatePlaygroundFont(); debouncedBackgroundRebuild()">
-            </div>
-            <div style="width: 140px;">
-              <div class="label-row"><label>Spacing</label><span class="val-badge" id="v-lt">1.0x</span></div>
-              <input type="range" id="pgLetterSpacing" min="0.5" max="2.5" step="0.05" value="1.0" oninput="updatePlaygroundFont()">
-            </div>
-            <div style="width: 140px;">
-              <div class="label-row"><label>Line Height</label><span class="val-badge" id="v-lh">1.2x</span></div>
-              <input type="range" id="pgLineHeight" min="0.8" max="3.0" step="0.1" value="1.2" oninput="updatePlaygroundFont()">
+
+            <div class="editor-scroll-container">
+              <textarea id="playgroundInput" class="editor-input" placeholder="The quick brown fox jumps over the lazy dog..." style="display:none; padding: 40px; font-size: 3.5rem; line-height: 1.2; width: 100%;"></textarea>
+              
+              <div id="placeholderPreview" style="flex: 1; display: grid; place-items: center; color: var(--rule); flex-direction: column; gap: 16px; min-height:600px;">
+                <p style="font-family: 'Instrument Serif', serif; font-style: italic; font-size: 2rem; opacity: 0.3;">Awaiting your scans</p>
+              </div>
+
+              <div class="overrides-panel" id="overridesPanel">
+                <div class="search-container" style="border-bottom: 1px solid var(--rule); padding: 20px;">
+                  <h3 style="font-family: 'Syne', sans-serif; font-size: 0.9rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Character Tuning</h3>
+                  <input type="text" id="charSearch" placeholder="Filter..." oninput="filterChars()" style="padding: 10px 14px; font-size: 0.8rem; border-radius: 8px; width: 100%; border: 1px solid var(--rule);">
+                </div>
+                <div class="overrides-grid" id="overridesGrid" style="padding: 20px;"></div>
+              </div>
             </div>
           </div>
-
-          <div style="display: flex; gap: 12px; align-items: center;">
-            <div class="overrides-toggle" id="toggleOverrides" onclick="toggleOverridesPanel()">
-              <svg style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-              Character Tuning
-            </div>
-            <button class="btn btn-primary" id="pgDownloadBtn" style="padding: 10px 16px; width: auto;">Export .TTF</button>
-          </div>
-        </div>
-        
-        <textarea id="playgroundInput" class="editor-input" placeholder="Start typing to see your font in action..."></textarea>
-
-        <div class="overrides-panel" id="overridesPanel">
-          <div class="search-container">
-            <h4 class="card-title" style="margin-bottom:12px">Search Characters</h4>
-            <input type="text" id="charSearch" placeholder="Type a character (e.g. 'a', 'g')..." oninput="filterChars()" style="padding: 10px 14px; font-size: 0.9rem; border-radius: 8px; width: 100%;">
-          </div>
-          <div class="overrides-grid" id="overridesGrid">
-            <p style="font-size: 0.8rem; color: var(--muted); text-align: center; padding: 20px;">Upload a scan to tune characters.</p>
-          </div>
-        </div>
-
-        
-        <div id="placeholderPreview" style="flex: 1; display: grid; place-items: center; color: var(--rule); flex-direction: column; gap: 16px;">
-          <svg style="width: 80px; height: 80px; opacity: 0.1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-          </svg>
-          <p style="font-family: 'Instrument Serif', serif; font-style: italic; font-size: 1.4rem; opacity: 0.3;">Awaiting your handwriting</p>
         </div>
       </div>
     </section>
@@ -724,260 +603,191 @@
 </main>
 
 <script>
-// ── Core Utils ─────────────────────────────────────────────────────────────
-function toggleCheck(el) {
-  el.classList.toggle('checked');
-  const input = el.querySelector('input');
-  if (input) input.checked = el.classList.contains('checked');
-}
+let TUNING_MAP = {};
+let pgUploadedFiles = [];
+let pgFontUrl = null;
+let rebuildTimer = null;
+let backgroundRebuildTimeout = null;
+let IS_TUNING_OPEN = false;
+let IS_INTERACTING = false;
 
 function toggleCard(id) {
   const card = document.getElementById(id);
   card.classList.toggle('collapsed');
 }
 
+function autoRebuild() {
+  clearTimeout(rebuildTimer);
+  rebuildTimer = setTimeout(() => {
+    if (!IS_INTERACTING) rebuildPlaygroundFont();
+  }, 1000);
+}
+
+function debouncedBackgroundRebuild() {
+  clearTimeout(backgroundRebuildTimeout);
+  backgroundRebuildTimeout = setTimeout(() => {
+    if (!IS_INTERACTING) rebuildPlaygroundFont();
+  }, 1200);
+}
+
 function toggleOverridesPanel() {
   const panel = document.getElementById('overridesPanel');
   const toggle = document.getElementById('toggleOverrides');
   const wrapper = document.getElementById('playgroundTestArea');
-  const isActive = panel.style.display === 'block';
+  IS_TUNING_OPEN = panel.style.display !== 'block';
+  panel.style.display = IS_TUNING_OPEN ? 'block' : 'none';
+  toggle.classList.toggle('active', IS_TUNING_OPEN);
+  IS_TUNING_OPEN ? wrapper.classList.add('tuning-active') : wrapper.classList.remove('tuning-active');
   
-  panel.style.display = isActive ? 'none' : 'block';
-  toggle.classList.toggle('active', !isActive);
-  
-  if (!isActive) {
-    wrapper.classList.add('tuning-active');
-  } else {
-    wrapper.classList.remove('tuning-active');
-  }
-}
-
-const TUNING_MAP = {}; 
-
-// Auto-rebuild debounce
-let rebuildTimer = null;
-function autoRebuild() {
-  clearTimeout(rebuildTimer);
-  rebuildTimer = setTimeout(() => {
+  // Refresh character grid if it's empty
+  if (IS_TUNING_OPEN && !document.getElementById('overridesGrid').children.length && pgUploadedFiles.length) {
     rebuildPlaygroundFont();
-  }, 400); // 400ms delay to feel snappy but not crashy
+  }
 }
 
 function filterChars() {
   const q = document.getElementById('charSearch').value.toLowerCase();
-  const cards = document.querySelectorAll('.char-card');
-  cards.forEach(c => {
-    const char = c.dataset.char.toLowerCase();
-    c.style.display = char.includes(q) ? 'grid' : 'none';
+  document.querySelectorAll('.char-card').forEach(c => {
+    c.style.display = c.dataset.char.toLowerCase().includes(q) ? 'grid' : 'none';
   });
 }
-
-function updatePlaygroundPreview(px) {
-  const area = document.getElementById('playgroundInput');
-  area.style.fontSize = px + 'px';
-}
-
-// ── Download Sheet ──────────────────────────────────────────────────────────
-async function downloadSheet() {
-  const btn = document.getElementById('downloadBtn');
-  const txt = document.getElementById('downloadBtnText');
-  const errEl = document.getElementById('downloadError');
-  errEl.classList.remove('visible');
-
-  const fontName = document.getElementById('fontNameInput').value.trim() || 'My Font';
-  const checks = document.querySelectorAll('.checkbox-item');
-  const opts = {};
-  checks.forEach(c => { opts[c.dataset.key] = c.classList.contains('checked'); });
-
-  txt.innerHTML = '<span class="spinner" style="width:14px; height:14px; border-width:2px; margin:0"></span>';
-  btn.disabled = true;
-
-  try {
-    const res = await fetch('/api/generate-sheet', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fontName,
-        extendedChars: true, // Always include for better UX
-        punctuation: true,
-      })
-    });
-
-    if (!res.ok) throw new Error(await res.text());
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${fontName.replace(/\s+/g,'_')}_template.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
-  } catch (e) {
-    errEl.textContent = 'Error: ' + e.message;
-    errEl.classList.add('visible');
-  } finally {
-    txt.textContent = 'Get PDF Template';
-    btn.disabled = false;
-  }
-}
-
-// ── Playground Logic ────────────────────────────────────────────────────────
-let pgUploadedFiles = [];
-let pgFontUrl = null;
 
 function updatePlaygroundFont() {
     const ls = document.getElementById('pgLetterSpacing').value;
     const sf = document.getElementById('pgScaleFactor').value;
-    const bs = parseFloat(document.getElementById('pgBaselineShift').value);
+    const bs = 0.5; // Always default 0.5 as requested
     const lh = document.getElementById('pgLineHeight').value;
     
     document.getElementById('v-lt').textContent = ls + 'x';
     document.getElementById('v-gs').textContent = sf + 'x';
-    document.getElementById('v-bs').textContent = bs;
     document.getElementById('v-lh').textContent = lh + 'x';
-
+    
     const area = document.getElementById('playgroundInput');
-    
-    // Immediate CSS-only updates
-    area.style.letterSpacing = (ls - 1) + 'em';
-    area.style.lineHeight = lh;
-    
-    // Use font-size for Scale (32px is the new base)
-    area.style.fontSize = (32 * sf) + 'px';
-
-    // Baseline Shift: use vertical transform for zero-lag feedback
-    // Scale the pixel offset by the scale factor
-    area.style.transform = `translateY(${bs * -40 * sf}px)`;
+    if (area) {
+      area.style.letterSpacing = (ls - 1) + 'em';
+      area.style.lineHeight = lh;
+      area.style.fontSize = (32 * sf) + 'px';
+      // Adjust transform logic if needed, but keeping it simple for now
+      area.style.transform = `translateY(${bs * -40 * sf}px)`;
+    }
 }
 
-// Global debouncer replaced with a cleaner version that updates the actual FONT in the background
-let backgroundRebuildTimeout = null;
 function debouncedBackgroundRebuild() {
   clearTimeout(backgroundRebuildTimeout);
-  backgroundRebuildTimeout = setTimeout(() => {
-    rebuildPlaygroundFont();
-  }, 1200); // Wait longer so users don't see loadings while sliding
+  backgroundRebuildTimeout = setTimeout(() => rebuildPlaygroundFont(), 1200);
+}
+
+function autoRebuild() {
+  clearTimeout(rebuildTimer);
+  rebuildTimer = setTimeout(() => rebuildPlaygroundFont(), 800);
+}
+
+async function downloadSheet() {
+  const btn = document.getElementById('downloadBtn');
+  const txt = document.getElementById('downloadBtnText');
+  const fontName = document.getElementById('fontNameInput').value.trim() || 'My Font';
+  txt.innerText = '...'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/generate-sheet', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fontName, extendedChars: true, punctuation: true })
+    });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `${fontName}_template.pdf`; a.click();
+    document.getElementById('step1Card').classList.add('collapsed');
+    document.getElementById('step2Card').classList.remove('collapsed');
+  } catch (e) { alert(e.message); }
+  finally { txt.innerText = 'Get PDF Template'; btn.disabled = false; }
 }
 
 async function handlePlaygroundUpload(fileList) {
     if (!fileList || fileList.length === 0) return;
-    
-    // Auto-collapse upload card and template card to focus on playground
     document.getElementById('step1Card').classList.add('collapsed');
     document.getElementById('step2Card').classList.add('collapsed');
-
+    document.getElementById('step3Card').classList.remove('collapsed');
     pgUploadedFiles = Array.from(fileList);
-    pgUploadedFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
-    
-    const listCont = document.getElementById('fileListContainer');
-    listCont.style.display = 'flex';
-    listCont.innerHTML = pgUploadedFiles.map(f => `
-        <div class="file-chip">
-            <span>📄 ${f.name}</span>
-        </div>
-    `).join('');
-
+    TUNING_MAP = {};
+    document.getElementById('overridesGrid').innerHTML = '';
     await rebuildPlaygroundFont();
 }
 
 async function rebuildPlaygroundFont() {
   const overlay = document.getElementById('playgroundProgress');
-  const lbl = document.getElementById('pgProgressLabel');
-  const errEl = document.getElementById('playgroundError');
-  const placeholder = document.getElementById('placeholderPreview');
-  const btn = document.getElementById('pgRebuildBtn');
   const input = document.getElementById('playgroundInput');
+  const placeholder = document.getElementById('placeholderPreview');
+  const grid = document.getElementById('overridesGrid');
 
   if (pgUploadedFiles.length === 0) return;
-
-  errEl.classList.remove('visible');
   overlay.style.display = 'flex';
-  lbl.innerText = 'Loading...';
-
+  
   const formData = new FormData();
   pgUploadedFiles.forEach(f => formData.append('pages', f));
   formData.append('fontName', document.getElementById('fontNameInput').value);
+  formData.append('letterSpacing', document.getElementById('pgLetterSpacing').value);
   formData.append('scaleFactor', document.getElementById('pgScaleFactor').value);
-  formData.append('baselineShift', document.getElementById('pgBaselineShift').value);
-  
-  // Package overrides as JSON
+  formData.append('baselineShift', '0.5'); // Fixed at 0.5
   formData.append('overrides', JSON.stringify(TUNING_MAP));
-
+  
   try {
-    const response = await fetch('/api/build-font-direct', {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!response.ok) {
-        const txt = await response.text();
-        throw new Error(txt || 'Failed to process scans.');
-    }
-
+    const response = await fetch('/api/build-font-direct', { method: 'POST', body: formData });
     const { ttf_url, characters } = await response.json();
-    if (pgFontUrl) URL.revokeObjectURL(pgFontUrl);
     pgFontUrl = ttf_url;
-    
-    // Update Tuning Grid
-    const grid = document.getElementById('overridesGrid');
-    const inputArea = document.getElementById('playgroundInput');
-    
-    if (characters && characters.length > 0) {
-      grid.innerHTML = characters.map(c => {
-        const config = TUNING_MAP[c] || { scale: 1.0, offset: 0 };
-        return `
-        <div class="char-card" data-char="${c}">
-          <div class="char-preview" style="font-family: 'PGFont_TEMP_NEW'">${c}</div>
-          <div class="char-control">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <label>Offset</label>
-              <span class="val-badge-tiny val-offset" style="margin-left:auto">${config.offset}</span>
-            </div>
-            <input type="range" min="-0.6" max="0.6" step="0.01" 
-                   value="${config.offset}" 
-                   oninput="if(!TUNING_MAP['${c}']) TUNING_MAP['${c}']={scale:1.0,offset:0}; TUNING_MAP['${c}'].offset = parseFloat(this.value); this.parentElement.querySelector('.val-offset').innerText = this.value; autoRebuild();">
 
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <label>Size</label>
-              <span class="val-badge-tiny val-scale" style="margin-left:auto">${config.scale}x</span>
-              <button onclick="delete TUNING_MAP['${c}']; rebuildPlaygroundFont();" style="border:none; background:none; cursor:pointer; font-size:10px; color:var(--muted); margin-left:6px">⟳</button>
-            </div>
-            <input type="range" min="0.5" max="2.0" step="0.05" 
-                   value="${config.scale}" 
-                   oninput="if(!TUNING_MAP['${c}']) TUNING_MAP['${c}']={scale:1.0,offset:0}; TUNING_MAP['${c}'].scale = parseFloat(this.value); this.parentElement.querySelector('.val-scale').innerText = this.value + 'x'; autoRebuild();">
-          </div>
-        </div>
-      `;}).join('');
-    }
-
-    const newFontName = 'PGFont_TEMP_NEW';
-    const fontFace = new FontFace(newFontName, `url(${pgFontUrl})`);
+    // Load font BEFORE grid update so previews look correct instantly
+    const fontVersion = Date.now();
+    const fontFace = new FontFace('PGFont_TEMP', `url(${ttf_url}?v=${fontVersion})`);
     await fontFace.load();
     document.fonts.add(fontFace);
 
-    inputArea.style.fontFamily = `"${newFontName}", sans-serif`;
-    inputArea.style.display = 'block';
+    // Only rebuild the grid if it's empty OR the panel is closed.
+    // This avoids resetting slider positions while the user is actively tuning.
+    if (characters && (grid.innerHTML === '' || !IS_TUNING_OPEN)) {
+      grid.innerHTML = characters.map(c => {
+        const config = TUNING_MAP[c] || { scale: 1.0, offset: 0 };
+        return `<div class="char-card" data-char="${c}">
+          <div class="char-preview" style="font-family: 'PGFont_TEMP'">${c}</div>
+          <div class="char-control">
+            <div class="label-row"><label style="font-size:0.6rem">Shift</label><span class="val-badge-tiny">${config.offset}</span></div>
+            <input type="range" min="-0.6" max="0.6" step="0.01" value="${config.offset}" 
+              onmousedown="IS_INTERACTING=true" onmouseup="IS_INTERACTING=false"
+              oninput="if(!TUNING_MAP['${c}'])TUNING_MAP['${c}']={scale:1.0,offset:0};TUNING_MAP['${c}'].offset=parseFloat(this.value); this.previousElementSibling.lastElementChild.textContent=this.value; autoRebuild();">
+            <div class="label-row"><label style="font-size:0.6rem">Scale</label><span class="val-badge-tiny">${config.scale}x</span></div>
+            <input type="range" min="0.5" max="2.0" step="0.05" value="${config.scale}" 
+              onmousedown="IS_INTERACTING=true" onmouseup="IS_INTERACTING=false"
+              oninput="if(!TUNING_MAP['${c}'])TUNING_MAP['${c}']={scale:1.0,offset:0};TUNING_MAP['${c}'].scale=parseFloat(this.value); this.previousElementSibling.lastElementChild.textContent=this.value+'x'; autoRebuild();">
+          </div>
+        </div>`;
+      }).join('');
+    } else if (characters) {
+        // Just force re-render on the previews to update appearance
+        document.querySelectorAll('.char-preview').forEach(p => {
+          p.style.fontFamily = 'serif'; // force redraw
+          setTimeout(() => p.style.fontFamily = '"PGFont_TEMP"', 10);
+        });
+    }
+
+    input.style.fontFamily = '"PGFont_TEMP", sans-serif';
+    input.style.display = 'block'; 
     placeholder.style.display = 'none';
     
+    // Use user-provided font name for download
+    const rawName = document.getElementById('fontNameInput').value || 'handfont';
+    const safeName = rawName.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'handfont';
+    
     document.getElementById('pgDownloadBtn').onclick = () => {
-        const a = document.createElement('a');
-        a.href = pgFontUrl;
-        a.download = `${document.getElementById('fontNameInput').value.replace(/\s+/g,'_')}.ttf`;
+        const a = document.createElement('a'); 
+        a.href = `${ttf_url}?v=${fontVersion}&n=${encodeURIComponent(safeName)}`; 
+        a.download = `${safeName}.ttf`; 
         a.click();
     };
-
     updatePlaygroundFont();
-    inputArea.focus();
-
-  } catch (err) {
-    errEl.textContent = 'Error: ' + err.message;
-    errEl.classList.add('visible');
-  } finally {
-    overlay.style.display = 'none';
-    btn.disabled = false;
+  } catch (err) { 
+    console.error("Font Build Error:", err);
+  } finally { 
+    overlay.style.display = 'none'; 
   }
 }
-</script>
 </script>
 </body>
 </html>

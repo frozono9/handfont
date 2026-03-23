@@ -192,13 +192,14 @@ def extract_glyph_from_cell(binary_img, cell_box, padding=4):
 
 
 def glyph_image_to_contours(glyph_data, em=1000, ascender=800, descender=-200, 
-                            scale_factor=0.7, baseline_shift=0.0):
+                            scale_factor=0.7, baseline_shift=0.0, char_shift=0.0):
     """
     Convert glyph data to scaled contours.
     glyph_data: (pil_img, offset_y, cell_h)
     
     scale_factor: 1.0 = normal, >1.0 = larger, <1.0 = smaller.
     baseline_shift: 0.0 = normal, >0.0 = shift up, <0.0 = shift down.
+    char_shift: per-character specific offset.
     """
     pil_img, offset_y, cell_h = glyph_data
     img_arr = np.array(pil_img)
@@ -218,25 +219,31 @@ def glyph_image_to_contours(glyph_data, em=1000, ascender=800, descender=-200,
     baseline_roi_y = cell_h * 0.7
     
     # Apply baseline shift (in font units)
-    # baseline_shift is 0.0 by default.
-    f_shift_y = int(ascender * float(baseline_shift))
+    # baseline_shift and char_shift are fractions (-1.0 to 1.0)
+    # Global shift + character specific shift
+    total_shift = float(baseline_shift) + float(char_shift)
+    f_shift_y = int(ascender * total_shift)
 
     font_paths = []
     hierarchy = hierarchy[0]
 
     for i, cnt in enumerate(contours):
         pts = cnt.squeeze()
-        if pts.ndim == 1:
-            pts = pts[np.newaxis, :]
+        if pts.ndim <= 1: # Handle single points or empty
+            continue
         
         font_pts = []
-        for px, py in pts:
+        for p in pts:
+            px, py = p[0], p[1]
             # px is 0-based in the tiny cropped image.
             fx = int(px * scale)
             
-            # fy distance from baseline: baseline_roi_y - (py + offset_y)
-            # Then add the shift.
-            fy = int((baseline_roi_y - (py + offset_y)) * scale) + f_shift_y
+            # Distance from baseline: (baseline_roi_y - (py + offset_y))
+            # We scale this distance to font units.
+            fy = (baseline_roi_y - (py + offset_y)) * scale
+            
+            # Apply shift
+            fy = int(fy + f_shift_y)
             
             font_pts.append((fx, fy))
         
@@ -316,14 +323,21 @@ def build_font(glyph_images: dict, font_name: str, output_dir: str,
     for char, glyph_data in glyph_images.items():
         gname = f'uni{ord(char):04X}'
         # per-character overrides
-        s_fact, b_shift = scale_factor, baseline_shift
+        s_fact, c_shift = scale_factor, 0.0
         if char in overrides:
-            s_fact, b_shift = overrides[char]
+            ov = overrides[char]
+            # Handle both (scale, offset) tuple or dict
+            if isinstance(ov, (list, tuple)):
+                s_fact, c_shift = float(ov[0]), float(ov[1])
+            elif isinstance(ov, dict):
+                s_fact = float(ov.get('scale', 1.0))
+                c_shift = float(ov.get('offset', 0.0))
             
         # glyph_data is (pil_img, offset_y, cell_h)
-        paths = glyph_image_to_contours(glyph_data, em, ascender, descender, s_fact, b_shift)
+        paths = glyph_image_to_contours(glyph_data, em, ascender, descender, s_fact, baseline_shift, c_shift)
         
         pil_img, offset_y, cell_h = glyph_data
+        # BASE SCALE must be consistent with what was used in contours
         scale = (ascender / max(cell_h * 0.7, 1)) * float(s_fact)
 
         pen = TTGlyphPen(None)
@@ -345,17 +359,24 @@ def build_font(glyph_images: dict, font_name: str, output_dir: str,
             except Exception:
                 pass
 
-        # Advance width proportional to image width (tight plus side bearings)
-        # Scale width by the SAME scale used for points
+        # Advance width logic:
+        # Side bearing should be constant in font units, NOT scaled by character scale
+        # Otherwise character-specific scale ruins spacing.
         iw = pil_img.width
-        side_bearing = int(em * 0.04) 
-        advance = int((iw * scale + (side_bearing * 2)) * letter_spacing)
+        # 1. Scaled character width
+        char_w = int(iw * scale)
+        # 2. Constant side bearing (5% of EM)
+        side_bearing = int(em * 0.05) 
+        # 3. Total advance
+        advance = int((char_w + (side_bearing * 2)) * letter_spacing)
         advance = max(advance, 200) 
 
         try:
             glyphs[gname] = pen.glyph() if drawn else empty_glyph()
         except Exception:
             glyphs[gname] = empty_glyph()
+            
+        # Metrics: (advance, leftSideBearing)
         metrics[gname] = (advance, side_bearing) 
 
     fb.setupGlyf(glyphs)
@@ -425,7 +446,7 @@ def build_font(glyph_images: dict, font_name: str, output_dir: str,
     print(f"✓ TTF:   {ttf_path}")
     print(f"✓ OTF:   {otf_path}")
     print(f"✓ WOFF2: {woff2_path}")
-    return [ttf_path, otf_path, woff2_path]
+    return [ttf_path, otf_path, woff2_path], list(glyph_images.keys())
 
 
 # ── Main pipeline ─────────────────────────────────────────────────────────────
@@ -436,11 +457,13 @@ def process_scan(image_paths, font_name="My Font", output_dir="/tmp/handfont_out
                  overrides: dict = None):
     """
     Full pipeline: list of scanned page image paths → font files.
+    Returns (list_of_font_paths, list_of_detected_chars).
     """
     if char_order is None:
         char_order = SHEET_CHAR_ORDER
 
-    all_cells = []
+    glyph_images = {}
+    char_idx = 0
 
     for img_path in image_paths:
         print(f"Processing {img_path}...")
@@ -448,37 +471,19 @@ def process_scan(image_paths, font_name="My Font", output_dir="/tmp/handfont_out
         img = deskew(img)
         binary = binarize(img)
         cells = detect_cell_grid(binary)
-        print(f"  Detected {len(cells)} cells")
-        all_cells.append((binary, cells))
 
-    # Extract glyphs in order
-    glyph_images = {}
-    char_idx = 0
-
-    for binary, cells in all_cells:
-        # Filter out section-label rows (they'll appear as very short/wide non-cell regions)
-        # We rely on our char_order to map cells to characters
-        char_cells = []
-        h, w = binary.shape
-        cell_h_approx = h * 0.08  # rough expected cell height
         for cell in cells:
-            cx, cy, cw, ch = cell
-            # Skip cells that look like section headers (too short)
-            if ch > cell_h_approx * 0.4:
-                char_cells.append(cell)
-
-        for cell in char_cells:
             if char_idx >= len(char_order):
                 break
-            ch_char = char_order[char_idx]
-            glyph = extract_glyph_from_cell(binary, cell)
-            if glyph is not None:
-                glyph_images[ch_char] = glyph
+            
+            res = extract_glyph_from_cell(binary, cell)
+            if res:
+                # res is (pil_img, offset_y, cell_h)
+                glyph_images[char_order[char_idx]] = res
             char_idx += 1
-
-    print(f"\nExtracted {len(glyph_images)} glyphs")
+            
     if not glyph_images:
-        raise Exception("No ink detected in the template. Please write more clearly.")
+        raise ValueError("No handwritten characters detected in the scan. Please check the template format.")
 
     return build_font(glyph_images, font_name, output_dir, 
                       letter_spacing=letter_spacing, space_width=space_width,
