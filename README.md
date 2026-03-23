@@ -1,5 +1,7 @@
 # handfont
 
+<img width="1512" height="761" alt="Screenshot 2026-03-23 at 16 29 15" src="https://github.com/user-attachments/assets/45a58082-56af-4771-9d12-60c195d5fe20" />
+
 A local web app that generates fill-in PDF template sheets, then processes
 your scanned/photographed handwriting into a complete font family (TTF, OTF, WOFF2).
 
