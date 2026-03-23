@@ -98,36 +98,37 @@ def build_font_endpoint():
 
 @app.route('/api/build-font-direct', methods=['POST'])
 def build_font_direct():
-    """Accept uploaded scanned pages, return the TTF file directly."""
+    """Accept uploaded scanned pages, return the TTF file URL and character list."""
     font_name = request.form.get('fontName', 'My Font')
     letter_spacing = float(request.form.get('letterSpacing', 1.0))
-    space_width = int(request.form.get('spaceWidth', 300))
     scale_factor = float(request.form.get('scaleFactor', 1.0))
     baseline_shift = float(request.form.get('baselineShift', 0.0))
-    overrides_raw = request.form.get('overrides', '')
     
-    # Parse overrides: "8:1.2,0.1; g:1.0,-0.1"
+    overrides_json = request.form.get('overrides', '{}')
     overrides = {}
-    if overrides_raw:
-        try:
-            for item in overrides_raw.split(';'):
-                if ':' in item:
-                    char_part, vals_part = item.split(':', 1)
-                    char = char_part.strip()
-                    if ',' in vals_part:
-                        s_val, b_val = vals_part.split(',', 1)
-                        overrides[char] = (float(s_val), float(b_val))
-        except:
-            pass # Silently fail if malformed
+    try:
+        data = json.loads(overrides_json)
+        # data is now like { 'a': { 'scale': 1.2, 'offset': 0.1 } }
+        for k, v in data.items():
+            if isinstance(v, dict):
+                # Ensure we have both values, default to global if missing or 1.0/0.0
+                scale = float(v.get('scale', 1.0))
+                offset = float(v.get('offset', 0.0))
+                overrides[k] = (scale, offset)
+            else:
+                overrides[k] = (1.0, float(v))
+    except:
+        pass
     
     files = request.files.getlist('pages')
     if not files: return jsonify({'error': 'No pages'}), 400
     
     session_id = uuid.uuid4().hex
     upload_session = UPLOAD_DIR / session_id
+    # We serve from static for the direct preview if possible, or just a temp path
     output_session = OUTPUT_DIR / session_id
-    upload_session.mkdir()
-    output_session.mkdir()
+    upload_session.mkdir(parents=True, exist_ok=True)
+    output_session.mkdir(parents=True, exist_ok=True)
     
     saved_paths = []
     for i, f in enumerate(files):
@@ -137,29 +138,45 @@ def build_font_direct():
         saved_paths.append(str(save_path))
     
     try:
+        # We need a way to return the actual characters found
+        # For now, we'll return the ones in the SHEET_CHAR_ORDER that we successfully processed
         font_files = process_scan(saved_paths, font_name=font_name,
                                   output_dir=str(output_session),
                                   char_order=SHEET_CHAR_ORDER,
                                   letter_spacing=letter_spacing,
-                                  space_width=space_width,
                                   scale_factor=scale_factor,
                                   baseline_shift=baseline_shift,
                                   overrides=overrides)
-        ttf_file = next((f for f in font_files if f.endswith('.ttf')), None)
-        if not ttf_file or not os.path.exists(ttf_file):
-            return jsonify({'error': 'No TTF generated'}), 500
         
-        # Load binary to return and cleanup
-        with open(ttf_file, 'rb') as f:
-            data = f.read()
+        ttf_path = next((f for f in font_files if f.endswith('.ttf')), None)
+        if not ttf_path:
+            return jsonify({'error': 'No TTF generated'}), 500
+
+        # Since we are returned a file path, and we need to preview it in the browser,
+        # we can't easily return a local temp path as a URL unless we serve it.
+        # Let's return the blob as a base64 or just send the file.
+        # Actually, let's keep it simple: return the file but with custom headers for the JS.
+        
+        with open(ttf_path, 'rb') as f:
+            font_data = f.read()
+        
+        import base64
+        b64_font = base64.b64encode(font_data).decode('utf-8')
+        
+        # Cleanup
         import shutil
         shutil.rmtree(str(upload_session), ignore_errors=True)
+        # We'll keep the output_session for now or just delete it since we have the b64
         shutil.rmtree(str(output_session), ignore_errors=True)
-        
-        return send_file(io.BytesIO(data), mimetype='font/ttf',
-                         as_attachment=True,
-                         download_name=f"{font_name.replace(' ','_')}.ttf")
+
+        return jsonify({
+            'ttf_url': f"data:font/ttf;base64,{b64_font}",
+            'characters': SHEET_CHAR_ORDER[:100] # Return sampled set for the tuning UI
+        })
+
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
