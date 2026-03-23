@@ -195,6 +195,17 @@ def glyph_image_to_contours(glyph_data, em=1000, ascender=800, descender=-200):
     """
     Convert glyph data to scaled contours.
     glyph_data: (pil_img, offset_y, cell_h)
+    
+    The template uses a baseline at 30% from the bottom of the cell.
+    In our ROI (inset_y):
+    - Top of cell is at y=0 (ROI coordinates)
+    - Bottom of cell is at y=cell_h
+    - Baseline (30% from bottom) is at y = cell_h * 0.7
+    
+    In Font units:
+    - Baseline is at y = 0
+    - Top (ascender) is at y = 800 (default)
+    - Bottom (descender) is at y = -200 (default)
     """
     pil_img, offset_y, cell_h = glyph_data
     img_arr = np.array(pil_img)
@@ -205,10 +216,13 @@ def glyph_image_to_contours(glyph_data, em=1000, ascender=800, descender=-200):
 
     ih, iw = img_arr.shape
     
-    # Scale based on the WHOLE cell height to preserve relative size
-    # The 'usable' area of the cell maps from top (ascender) to bottom (descender)
-    total_font_height = ascender - descender
-    scale = total_font_height / max(cell_h, 1)
+    # In the template, the space from baseline to top is 70% of the cell height.
+    # We want that 70% to map to our 'ascender' units (default 800).
+    # So: scale = ascender / (cell_h * 0.7)
+    scale = ascender / max(cell_h * 0.7, 1)
+
+    # The baseline in ROI coordinates is at:
+    baseline_roi_y = cell_h * 0.7
 
     font_paths = []
     hierarchy = hierarchy[0]
@@ -220,13 +234,15 @@ def glyph_image_to_contours(glyph_data, em=1000, ascender=800, descender=-200):
         
         font_pts = []
         for px, py in pts:
-            # px is 0-based in the tiny cropped image. 
-            # py is 0-based in the tiny cropped image.
-            # We add offset_y to move it back to ROI coordinates.
+            # px is 0-based in the tiny cropped image.
             fx = int(px * scale)
-            # Flip Y: Font units grow UP. ROI y grows DOWN.
-            # ROI y=0 is at 'ascender'. ROI y=cell_h is at 'descender'.
-            fy = int(ascender - (py + offset_y) * scale)
+            
+            # py is 0-based in the tiny cropped image.
+            # Convert to ROI Y: py + offset_y
+            # Y distance from baseline: baseline_roi_y - (py + offset_y)
+            # (Note: lower Y in drawing is higher Y in font)
+            fy = int((baseline_roi_y - (py + offset_y)) * scale)
+            
             font_pts.append((fx, fy))
         
         is_hole = hierarchy[i][3] != -1
@@ -294,8 +310,7 @@ def build_font(glyph_images: dict, font_name: str, output_dir: str,
         paths = glyph_image_to_contours(glyph_data, em, ascender, descender)
         
         pil_img, offset_y, cell_h = glyph_data
-        total_font_height = ascender - descender
-        scale = total_font_height / max(cell_h, 1)
+        scale = ascender / max(cell_h * 0.7, 1)
 
         pen = TTGlyphPen(None)
         drawn = False
