@@ -94,6 +94,136 @@
     gap: 24px;
   }
 
+  /* Integrated Tutorial Styles */
+  .tutorial-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .tutorial-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .tutorial-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    background: var(--accent-soft);
+    color: var(--accent);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .tutorial-text {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .tutorial-text strong {
+    color: var(--ink);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 17, 16, 0.4);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+  }
+
+  .modal-overlay.visible {
+    display: flex;
+  }
+
+  .modal-card {
+    background: var(--paper);
+    width: 100%;
+    max-width: 500px;
+    border-radius: 20px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.2);
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes modalSlide {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-hero {
+    background: var(--ink);
+    padding: 60px 40px 40px 40px;
+    color: white;
+    text-align: center;
+  }
+
+  .modal-body {
+    padding: 40px;
+  }
+
+  .modal-footer {
+    padding: 0 40px 40px 40px;
+  }
+
+  .modal-tutorial-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .modal-tutorial-item {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .modal-tutorial-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    background: var(--accent-soft);
+    color: var(--accent);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .modal-tutorial-text strong {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    color: var(--ink);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .modal-tutorial-text p {
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
   .section-title {
     font-family: 'Instrument Serif', serif;
     font-size: 2.8rem;
@@ -484,8 +614,48 @@
 </head>
 <body>
 
+<div class="modal-overlay" id="onboardingModal">
+  <div class="modal-card">
+    <div class="modal-hero">
+      <h2 style="font-family: 'Instrument Serif', serif; font-size: 3.5rem; line-height: 1; font-style: italic; margin-bottom: 8px;">Getting Started</h2>
+      <p style="font-family: 'DM Mono', monospace; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.6;">Guidelines for a perfect font</p>
+    </div>
+    <div class="modal-body">
+      <ul class="modal-tutorial-list">
+        <li class="modal-tutorial-item">
+          <div class="modal-tutorial-number">1</div>
+          <div class="modal-tutorial-text">
+            <strong>Choose your medium</strong>
+            <p>Download the PDF template. You can print it to write by hand, or import it into a tablet to draw the characters digitally.</p>
+          </div>
+        </li>
+        <li class="modal-tutorial-item">
+          <div class="modal-tutorial-number">2</div>
+          <div class="modal-tutorial-text">
+            <strong>Ensure high legibility</strong>
+            <p>Avoid fully closed loops (like in 'A', 'P' or 'o'). Leaving a microscopic gap ensures the software traces the ink perfectly.</p>
+          </div>
+        </li>
+        <li class="modal-tutorial-item">
+          <div class="modal-tutorial-number">3</div>
+          <div class="modal-tutorial-text">
+            <strong>Proportions & Boundaries</strong>
+            <p>Stay within the lines and maintain natural proportions. Don't worry about being perfect—you can fine-tune every character's size and position in the Studio later.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeOnboarding()">Let's Begin</button>
+    </div>
+  </div>
+</div>
+
 <header>
   <div class="logo">handfont</div>
+  <button onclick="document.getElementById('onboardingModal').classList.add('visible')" style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 10px 16px; font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;">
+    Help & Guidelines
+  </button>
 </header>
 
 <div class="grid-bg"></div>
@@ -547,8 +717,7 @@
       <!-- Step 3: Design Studio -->
       <div class="card" id="step3Card" style="border:none; box-shadow:none; background:transparent">
         <div class="card-header" style="background:transparent; border:none; padding: 0 0 24px 0;">
-          <h2 style="font-family: 'Instrument Serif', serif; font-size: 2.8rem; margin:0; font-style: italic;">The Studio</h2>
-          <p style="font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;">Write, tune, and refine your typeface</p>
+          <h2 style="font-family: 'Instrument Serif', serif; font-size: 2.8rem; margin:0; font-style: italic;">Studio</h2>
         </div>
         <div class="card-body" style="padding: 0;">
           <div class="editor-wrapper" id="playgroundTestArea" style="min-height: 800px; border:none; box-shadow:none; border-radius:12px; position:relative; overflow:hidden; background:var(--paper); border: 1px solid var(--rule);">
@@ -583,8 +752,15 @@
             <div class="editor-scroll-container">
               <textarea id="playgroundInput" class="editor-input" placeholder="The quick brown fox jumps over the lazy dog..." style="display:none; padding: 40px; font-size: 3.5rem; line-height: 1.2; width: 100%;"></textarea>
               
-              <div id="placeholderPreview" style="flex: 1; display: grid; place-items: center; color: var(--rule); flex-direction: column; gap: 16px; min-height:600px;">
-                <p style="font-family: 'Instrument Serif', serif; font-style: italic; font-size: 2rem; opacity: 0.3;">Awaiting your scans</p>
+              <div id="placeholderPreview" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); gap: 24px; min-height:600px; padding: 40px; text-align: center;">
+                <div style="max-width: 440px;">
+                  <h3 style="font-family: 'Instrument Serif', serif; font-size: 2.8rem; font-style: italic; color: var(--ink); line-height: 1; margin-bottom: 16px;">The Design Studio</h3>
+                  <p style="font-size: 1rem; line-height: 1.6; opacity: 0.7; margin-bottom: 32px;">Once you upload your scans, your handwriting will appear here. You can then adjust scaling, spacing, and baseline for that perfect custom feel.</p>
+                  
+                      <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; padding-top: 32px; border-top: 1px solid var(--rule);">
+                    <div style="font-size: 0.85rem; line-height: 1.6; opacity: 0.7; max-width: 320px;">Follow the guidelines in Step 1 & 2 to bring your unique typeface to life.</div>
+                  </div>
+                </div>
               </div>
 
               <div class="overrides-panel" id="overridesPanel">
@@ -610,6 +786,14 @@ let rebuildTimer = null;
 let backgroundRebuildTimeout = null;
 let IS_TUNING_OPEN = false;
 let IS_INTERACTING = false;
+
+window.onload = function() {
+  document.getElementById('onboardingModal').classList.add('visible');
+};
+
+function closeOnboarding() {
+  document.getElementById('onboardingModal').classList.remove('visible');
+}
 
 function toggleCard(id) {
   const card = document.getElementById(id);
