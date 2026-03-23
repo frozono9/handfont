@@ -101,7 +101,9 @@ def build_font_direct():
     """Accept uploaded scanned pages, return the TTF file directly."""
     font_name = request.form.get('fontName', 'My Font')
     letter_spacing = float(request.form.get('letterSpacing', 1.0))
-    space_width = int(request.form.get('spaceWidth', 250))
+    space_width = int(request.form.get('spaceWidth', 300))
+    scale_factor = float(request.form.get('scaleFactor', 1.0))
+    baseline_shift = float(request.form.get('baselineShift', 0.0))
     
     files = request.files.getlist('pages')
     if not files: return jsonify({'error': 'No pages'}), 400
@@ -124,7 +126,9 @@ def build_font_direct():
                                   output_dir=str(output_session),
                                   char_order=SHEET_CHAR_ORDER,
                                   letter_spacing=letter_spacing,
-                                  space_width=space_width)
+                                  space_width=space_width,
+                                  scale_factor=scale_factor,
+                                  baseline_shift=baseline_shift)
         ttf_file = next((f for f in font_files if f.endswith('.ttf')), None)
         if not ttf_file or not os.path.exists(ttf_file):
             return jsonify({'error': 'No TTF generated'}), 500

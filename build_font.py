@@ -191,21 +191,14 @@ def extract_glyph_from_cell(binary_img, cell_box, padding=4):
     return (Image.fromarray(cropped), ry, main_ink.shape[0])
 
 
-def glyph_image_to_contours(glyph_data, em=1000, ascender=800, descender=-200):
+def glyph_image_to_contours(glyph_data, em=1000, ascender=800, descender=-200, 
+                            scale_factor=0.7, baseline_shift=0.0):
     """
     Convert glyph data to scaled contours.
     glyph_data: (pil_img, offset_y, cell_h)
     
-    The template uses a baseline at 30% from the bottom of the cell.
-    In our ROI (inset_y):
-    - Top of cell is at y=0 (ROI coordinates)
-    - Bottom of cell is at y=cell_h
-    - Baseline (30% from bottom) is at y = cell_h * 0.7
-    
-    In Font units:
-    - Baseline is at y = 0
-    - Top (ascender) is at y = 800 (default)
-    - Bottom (descender) is at y = -200 (default)
+    scale_factor: 1.0 = normal, >1.0 = larger, <1.0 = smaller.
+    baseline_shift: 0.0 = normal, >0.0 = shift up, <0.0 = shift down.
     """
     pil_img, offset_y, cell_h = glyph_data
     img_arr = np.array(pil_img)
@@ -218,11 +211,15 @@ def glyph_image_to_contours(glyph_data, em=1000, ascender=800, descender=-200):
     
     # In the template, the space from baseline to top is 70% of the cell height.
     # We want that 70% to map to our 'ascender' units (default 800).
-    # So: scale = ascender / (cell_h * 0.7)
-    scale = ascender / max(cell_h * 0.7, 1)
+    # scale_factor allows making them bigger/smaller.
+    scale = (ascender / max(cell_h * 0.7, 1)) * float(scale_factor)
 
     # The baseline in ROI coordinates is at:
     baseline_roi_y = cell_h * 0.7
+    
+    # Apply baseline shift (in font units)
+    # baseline_shift is 0.0 by default.
+    f_shift_y = int(ascender * float(baseline_shift))
 
     font_paths = []
     hierarchy = hierarchy[0]
@@ -237,11 +234,9 @@ def glyph_image_to_contours(glyph_data, em=1000, ascender=800, descender=-200):
             # px is 0-based in the tiny cropped image.
             fx = int(px * scale)
             
-            # py is 0-based in the tiny cropped image.
-            # Convert to ROI Y: py + offset_y
-            # Y distance from baseline: baseline_roi_y - (py + offset_y)
-            # (Note: lower Y in drawing is higher Y in font)
-            fy = int((baseline_roi_y - (py + offset_y)) * scale)
+            # fy distance from baseline: baseline_roi_y - (py + offset_y)
+            # Then add the shift.
+            fy = int((baseline_roi_y - (py + offset_y)) * scale) + f_shift_y
             
             font_pts.append((fx, fy))
         
@@ -284,7 +279,8 @@ SHEET_CHAR_ORDER = (
 
 def build_font(glyph_images: dict, font_name: str, output_dir: str,
                em: int = 1000, ascender: int = 780, descender: int = -220,
-               letter_spacing: float = 1.0, space_width: int = 250):
+               letter_spacing: float = 1.0, space_width: int = 250,
+               scale_factor: float = 1.0, baseline_shift: float = 0.0):
     """
     glyph_images: dict mapping character → PIL Image (binary, ink=255)
     Builds TTF, OTF, and WOFF2 files.
@@ -317,11 +313,11 @@ def build_font(glyph_images: dict, font_name: str, output_dir: str,
 
     for char, glyph_data in glyph_images.items():
         gname = f'uni{ord(char):04X}'
-        # glyph_data is now (pil_img, offset_y, cell_h)
-        paths = glyph_image_to_contours(glyph_data, em, ascender, descender)
+        # glyph_data is (pil_img, offset_y, cell_h)
+        paths = glyph_image_to_contours(glyph_data, em, ascender, descender, scale_factor, baseline_shift)
         
         pil_img, offset_y, cell_h = glyph_data
-        scale = ascender / max(cell_h * 0.7, 1)
+        scale = (ascender / max(cell_h * 0.7, 1)) * float(scale_factor)
 
         pen = TTGlyphPen(None)
         drawn = False
@@ -428,7 +424,8 @@ def build_font(glyph_images: dict, font_name: str, output_dir: str,
 # ── Main pipeline ─────────────────────────────────────────────────────────────
 
 def process_scan(image_paths, font_name="My Font", output_dir="/tmp/handfont_out",
-                 char_order=None, letter_spacing=1.0, space_width=250):
+                 char_order=None, letter_spacing=1.0, space_width=250,
+                 scale_factor: float = 1.0, baseline_shift: float = 0.0):
     """
     Full pipeline: list of scanned page image paths → font files.
     """
@@ -473,7 +470,8 @@ def process_scan(image_paths, font_name="My Font", output_dir="/tmp/handfont_out
 
     print(f"\nExtracted {len(glyph_images)} glyphs")
     return build_font(glyph_images, font_name, output_dir, 
-                      letter_spacing=letter_spacing, space_width=space_width)
+                      letter_spacing=letter_spacing, space_width=space_width,
+                      scale_factor=scale_factor, baseline_shift=baseline_shift)
 
 
 if __name__ == "__main__":
