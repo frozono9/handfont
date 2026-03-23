@@ -147,13 +147,13 @@ def detect_cell_grid(binary_img, cols=COLS):
 def extract_glyph_from_cell(binary_img, cell_box, padding=4):
     """
     Extract a glyph image from a cell bounding box.
-    Returns a tight-cropped binary PIL image of the ink, or None if empty.
+    Keeps relative positioning (baseline/height) within the cell.
+    Returns (PIL image, relative_y, cell_h) where relative_y is top offset in cell.
     """
     x, y, w, h = cell_box
     # Add significant inset to avoid grid lines and labels
-    # Labels are at the top and bottom of the cell.
     inset_x = max(2, w // 10)
-    inset_y = max(2, h // 6) # Larger vertical inset to skip labels/unicode
+    inset_y = max(2, h // 6) 
     roi = binary_img[y+inset_y : y+h-inset_y, x+inset_x : x+w-inset_x]
 
     if roi.size == 0:
@@ -167,48 +167,51 @@ def extract_glyph_from_cell(binary_img, cell_box, padding=4):
     main_ink = np.zeros_like(ink)
     has_ink = False
     for cnt in contours:
-        if cv2.contourArea(cnt) > 10: # Min area for a stroke
+        if cv2.contourArea(cnt) > 10: 
             cv2.drawContours(main_ink, [cnt], -1, 255, -1)
             has_ink = True
     
     if not has_ink:
         return None
 
-    # Tight crop around filtered ink
+    # Find the ink boundaries relative to the ROI
     coords = cv2.findNonZero(main_ink)
     if coords is None:
         return None
     rx, ry, rw, rh = cv2.boundingRect(coords)
 
-    # Add small padding
+    # Tight crop for the image itself
     px1 = max(0, rx - padding)
     py1 = max(0, ry - padding)
     px2 = min(main_ink.shape[1], rx + rw + padding)
     py2 = min(main_ink.shape[0], ry + rh + padding)
     cropped = main_ink[py1:py2, px1:px2]
 
-    return Image.fromarray(cropped)
+    # Crucial: return the vertical offset (ry) and the usable height of the cell
+    return (Image.fromarray(cropped), ry, main_ink.shape[0])
 
 
-def glyph_image_to_contours(pil_img, em=1000, ascender=800, descender=-200):
+def glyph_image_to_contours(glyph_data, em=1000, ascender=800, descender=-200):
     """
-    Convert a binary glyph image (ink=255) to a list of contours/paths
-    scaled to font units. Returns a list of (pts, is_hole) tuples.
+    Convert glyph data to scaled contours.
+    glyph_data: (pil_img, offset_y, cell_h)
     """
+    pil_img, offset_y, cell_h = glyph_data
     img_arr = np.array(pil_img)
-    # Use RETR_CCOMP to get a hierarchical structure (outer contours + holes)
     contours, hierarchy = cv2.findContours(img_arr, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_L1)
 
     if not contours or hierarchy is None:
         return []
 
     ih, iw = img_arr.shape
-    # Map image coords → font units
-    scale_x = em * 0.7 / max(iw, 1)
-    scale_y = (ascender - descender) / max(ih, 1)
+    
+    # Scale based on the WHOLE cell height to preserve relative size
+    # The 'usable' area of the cell maps from top (ascender) to bottom (descender)
+    total_font_height = ascender - descender
+    scale = total_font_height / max(cell_h, 1)
 
     font_paths = []
-    hierarchy = hierarchy[0] # [Next, Previous, First_Child, Parent]
+    hierarchy = hierarchy[0]
 
     for i, cnt in enumerate(contours):
         pts = cnt.squeeze()
@@ -217,11 +220,15 @@ def glyph_image_to_contours(pil_img, em=1000, ascender=800, descender=-200):
         
         font_pts = []
         for px, py in pts:
-            fx = int(px * scale_x)
-            fy = int(ascender - py * scale_y)
+            # px is 0-based in the tiny cropped image. 
+            # py is 0-based in the tiny cropped image.
+            # We add offset_y to move it back to ROI coordinates.
+            fx = int(px * scale)
+            # Flip Y: Font units grow UP. ROI y grows DOWN.
+            # ROI y=0 is at 'ascender'. ROI y=cell_h is at 'descender'.
+            fy = int(ascender - (py + offset_y) * scale)
             font_pts.append((fx, fy))
         
-        # In RETR_CCOMP, holes have a parent (hierarchy[i][3] != -1)
         is_hole = hierarchy[i][3] != -1
         font_paths.append((font_pts, is_hole))
 
@@ -281,13 +288,14 @@ def build_font(glyph_images: dict, font_name: str, output_dir: str,
     glyphs['space'] = empty_glyph()
     metrics['space'] = (int(space_width), 0)
 
-    for char, pil_img in glyph_images.items():
+    for char, glyph_data in glyph_images.items():
         gname = f'uni{ord(char):04X}'
-        paths = glyph_image_to_contours(pil_img, em, ascender, descender)
+        # glyph_data is now (pil_img, offset_y, cell_h)
+        paths = glyph_image_to_contours(glyph_data, em, ascender, descender)
         
-        # Calculate scale_x (consistent with glyph_image_to_contours logic)
-        ih, iw = np.array(pil_img).shape[:2]
-        scale_x = em * 0.7 / max(iw, 1)
+        pil_img, offset_y, cell_h = glyph_data
+        total_font_height = ascender - descender
+        scale = total_font_height / max(cell_h, 1)
 
         pen = TTGlyphPen(None)
         drawn = False
@@ -309,17 +317,17 @@ def build_font(glyph_images: dict, font_name: str, output_dir: str,
                 pass
 
         # Advance width proportional to image width (tight plus side bearings)
-        # Apply letter_spacing multiplier to the calculated width
+        # Scale width by the SAME scale used for points
         iw = pil_img.width
-        side_bearing = int(em * 0.04) # 4% of EM
-        advance = int((iw * scale_x + (side_bearing * 2)) * letter_spacing)
-        advance = max(advance, 200) # Min reasonable width
+        side_bearing = int(em * 0.04) 
+        advance = int((iw * scale + (side_bearing * 2)) * letter_spacing)
+        advance = max(advance, 200) 
 
         try:
             glyphs[gname] = pen.glyph() if drawn else empty_glyph()
         except Exception:
             glyphs[gname] = empty_glyph()
-        metrics[gname] = (advance, side_bearing) # (width, lsb)
+        metrics[gname] = (advance, side_bearing) 
 
     fb.setupGlyf(glyphs)
     fb.setupHorizontalMetrics(metrics)
