@@ -280,12 +280,14 @@ SHEET_CHAR_ORDER = (
 def build_font(glyph_images: dict, font_name: str, output_dir: str,
                em: int = 1000, ascender: int = 780, descender: int = -220,
                letter_spacing: float = 1.0, space_width: int = 250,
-               scale_factor: float = 1.0, baseline_shift: float = 0.0):
+               scale_factor: float = 1.0, baseline_shift: float = 0.0,
+               overrides: dict = None):
     """
     glyph_images: dict mapping character → PIL Image (binary, ink=255)
     Builds TTF, OTF, and WOFF2 files.
     Returns list of output file paths.
     """
+    if overrides is None: overrides = {}
     os.makedirs(output_dir, exist_ok=True)
 
     safe_name = font_name.replace(' ', '')
@@ -313,11 +315,16 @@ def build_font(glyph_images: dict, font_name: str, output_dir: str,
 
     for char, glyph_data in glyph_images.items():
         gname = f'uni{ord(char):04X}'
+        # per-character overrides
+        s_fact, b_shift = scale_factor, baseline_shift
+        if char in overrides:
+            s_fact, b_shift = overrides[char]
+            
         # glyph_data is (pil_img, offset_y, cell_h)
-        paths = glyph_image_to_contours(glyph_data, em, ascender, descender, scale_factor, baseline_shift)
+        paths = glyph_image_to_contours(glyph_data, em, ascender, descender, s_fact, b_shift)
         
         pil_img, offset_y, cell_h = glyph_data
-        scale = (ascender / max(cell_h * 0.7, 1)) * float(scale_factor)
+        scale = (ascender / max(cell_h * 0.7, 1)) * float(s_fact)
 
         pen = TTGlyphPen(None)
         drawn = False
@@ -425,7 +432,8 @@ def build_font(glyph_images: dict, font_name: str, output_dir: str,
 
 def process_scan(image_paths, font_name="My Font", output_dir="/tmp/handfont_out",
                  char_order=None, letter_spacing=1.0, space_width=250,
-                 scale_factor: float = 1.0, baseline_shift: float = 0.0):
+                 scale_factor: float = 1.0, baseline_shift: float = 0.0,
+                 overrides: dict = None):
     """
     Full pipeline: list of scanned page image paths → font files.
     """
@@ -469,9 +477,13 @@ def process_scan(image_paths, font_name="My Font", output_dir="/tmp/handfont_out
             char_idx += 1
 
     print(f"\nExtracted {len(glyph_images)} glyphs")
+    if not glyph_images:
+        raise Exception("No ink detected in the template. Please write more clearly.")
+
     return build_font(glyph_images, font_name, output_dir, 
                       letter_spacing=letter_spacing, space_width=space_width,
-                      scale_factor=scale_factor, baseline_shift=baseline_shift)
+                      scale_factor=scale_factor, baseline_shift=baseline_shift,
+                      overrides=overrides)
 
 
 if __name__ == "__main__":

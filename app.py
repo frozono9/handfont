@@ -104,6 +104,21 @@ def build_font_direct():
     space_width = int(request.form.get('spaceWidth', 300))
     scale_factor = float(request.form.get('scaleFactor', 1.0))
     baseline_shift = float(request.form.get('baselineShift', 0.0))
+    overrides_raw = request.form.get('overrides', '')
+    
+    # Parse overrides: "8:1.2,0.1; g:1.0,-0.1"
+    overrides = {}
+    if overrides_raw:
+        try:
+            for item in overrides_raw.split(';'):
+                if ':' in item:
+                    char_part, vals_part = item.split(':', 1)
+                    char = char_part.strip()
+                    if ',' in vals_part:
+                        s_val, b_val = vals_part.split(',', 1)
+                        overrides[char] = (float(s_val), float(b_val))
+        except:
+            pass # Silently fail if malformed
     
     files = request.files.getlist('pages')
     if not files: return jsonify({'error': 'No pages'}), 400
@@ -128,7 +143,8 @@ def build_font_direct():
                                   letter_spacing=letter_spacing,
                                   space_width=space_width,
                                   scale_factor=scale_factor,
-                                  baseline_shift=baseline_shift)
+                                  baseline_shift=baseline_shift,
+                                  overrides=overrides)
         ttf_file = next((f for f in font_files if f.endswith('.ttf')), None)
         if not ttf_file or not os.path.exists(ttf_file):
             return jsonify({'error': 'No TTF generated'}), 500

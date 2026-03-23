@@ -847,10 +847,20 @@
               </div>
             </div>
           </div>
-          <div style="margin-top: 15px; text-align: right;">
+        <div style="margin-top: 15px; text-align: right; display: flex; justify-content: space-between; align-items: center;">
+            <button class="btn btn-outline" onclick="toggleAdvancedOverrides()" style="padding: 6px 14px; font-size: 0.65rem;">
+              ⚙ Character Overrides
+            </button>
             <button class="btn btn-outline" id="pgRebuildBtn" onclick="rebuildPlaygroundFont()" style="padding: 6px 14px; font-size: 0.65rem;">
               ↻ Apply Changes & Rebuild
             </button>
+          </div>
+          <div id="pgAdvancedOverrides" style="display:none; margin-top: 15px; border-top: 1px dashed var(--rule); padding-top: 15px;">
+            <p style="font-size: 0.65rem; color: var(--muted); margin-bottom: 10px;">
+              Enter overrides for specific characters (e.g., <code>8:1.2,0.1; p:0.9,-0.05</code> where <code>char:scale,shift</code>)
+            </p>
+            <textarea id="pgOverridesRaw" placeholder="8:1.2,0.1; g:1.0,-0.1" 
+                      style="width: 100%; height: 60px; font-family: 'DM Mono', monospace; font-size: 0.75rem; padding: 10px; border: 1px solid var(--rule); outline: none; background: #fff; resize: none;"></textarea>
           </div>
         </div>
 
@@ -1162,6 +1172,11 @@ function updateFontSize(val) {
   document.getElementById('fontSizeVal').textContent = val + 'px';
 }
 
+function toggleAdvancedOverrides() {
+  const el = document.getElementById('pgAdvancedOverrides');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
 // ── Playground ─────────────────────────────────────────────────────────────
 let playgroundFiles = [];
 
@@ -1188,7 +1203,8 @@ async function rebuildPlaygroundFont() {
         letterSpacing: document.getElementById('pgLetterSpacing').value,
         spaceWidth: document.getElementById('pgSpaceWidth').value,
         scaleFactor: document.getElementById('pgScaleFactor').value,
-        baselineShift: document.getElementById('pgBaselineShift').value
+        baselineShift: document.getElementById('pgBaselineShift').value,
+        overrides: document.getElementById('pgOverridesRaw').value
     };
 
     await handlePlaygroundUpload(playgroundFiles, params);
@@ -1224,6 +1240,7 @@ async function handlePlaygroundUpload(fileList, params = {}) {
     if (params.spaceWidth) form.append('spaceWidth', params.spaceWidth);
     if (params.scaleFactor) form.append('scaleFactor', params.scaleFactor);
     if (params.baselineShift) form.append('baselineShift', params.baselineShift);
+    if (params.overrides) form.append('overrides', params.overrides);
 
     // Only show full progress bar if it's the first time
     if (pgTestArea.style.display === 'none') {
